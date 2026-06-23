@@ -1,8 +1,7 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  ScanText,
   Github,
   Sparkles,
   ShieldCheck,
@@ -24,6 +23,7 @@ import { ResultViewer } from '@/components/result-viewer'
 import { EngineSelector } from '@/components/engine-selector'
 import { DocumentInfoPanel } from '@/components/document-info-panel'
 import { HistoryPanel } from '@/components/history-panel'
+import { DrawingModePanel } from '@/components/drawing-mode-panel'
 import { runOcr, type OcrResult } from '@/lib/ocr'
 import {
   analyzeImage,
@@ -33,6 +33,7 @@ import {
   type ImageAnalysis,
 } from '@/lib/hybrid-engine'
 import { saveToHistory, type HistoryItem } from '@/lib/history'
+import { vectorizeImage, type VectorLayer } from '@/lib/vectorize'
 
 export default function Home() {
   const { theme, setTheme } = useTheme()
@@ -51,6 +52,10 @@ export default function Home() {
   const [enginePref, setEnginePref] = useState<EngineId>('auto')
   const [analyses, setAnalyses] = useState<Record<string, ImageAnalysis>>({})
   const [routingReasons, setRoutingReasons] = useState<Record<string, string>>({})
+  const [drawingMode, setDrawingMode] = useState(false)
+  const [vectorLayer, setVectorLayer] = useState<VectorLayer | null>(null)
+  const [vectorizing, setVectorizing] = useState(false)
+  const [vectorStatus, setVectorStatus] = useState<string>('')
 
   const addFiles = useCallback((incoming: File[]) => {
     const newOnes: UploadedFile[] = incoming.map((file) => ({
@@ -188,6 +193,36 @@ export default function Home() {
     [items, activeId],
   )
 
+  // Reset vector layer when active file changes
+  useEffect(() => {
+    setVectorLayer(null)
+    setVectorStatus('')
+  }, [activeId])
+
+  const handleVectorize = useCallback(async () => {
+    if (!activeItem) {
+      toast.error('Select a file to vectorize first')
+      return
+    }
+    setVectorizing(true)
+    setVectorStatus('Loading OpenCV.js')
+    try {
+      const layer = await vectorizeImage(activeItem.file.file, {}, (p) => {
+        setVectorStatus(p.status)
+      })
+      setVectorLayer(layer)
+      toast.success(`Vectorized: ${layer.totalPrimitives} primitives`, {
+        description: `${layer.lines.length} lines · ${layer.circles.length} circles · ${layer.polygons.length} polygons`,
+      })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      toast.error('Vectorization failed', { description: msg })
+    } finally {
+      setVectorizing(false)
+      setVectorStatus('')
+    }
+  }, [activeItem])
+
   const handleHistorySelect = useCallback((item: HistoryItem) => {
     // Reconstruct a minimal OcrResult from the history item so the viewer + exporters work
     const result: OcrResult = {
@@ -322,6 +357,15 @@ export default function Home() {
               routingReason={activeItem ? routingReasons[activeItem.file.id] : undefined}
               disabled={running}
             />
+            <DrawingModePanel
+              enabled={drawingMode}
+              onChange={setDrawingMode}
+              onVectorize={handleVectorize}
+              vectorLayer={vectorLayer}
+              vectorizing={vectorizing}
+              vectorStatus={vectorStatus}
+              disabled={running || !activeItem}
+            />
             <SettingsPanel settings={settings} onChange={setSettings} disabled={running} />
           </div>
 
@@ -340,6 +384,8 @@ export default function Home() {
             <ResultViewer
               result={activeItem?.result ?? null}
               fileName={activeItem?.file.file.name ?? ''}
+              vectorLayer={drawingMode ? vectorLayer : null}
+              imagePreview={activeItem?.file.preview}
             />
           </div>
 
@@ -349,6 +395,7 @@ export default function Home() {
               result={activeItem?.result ?? null}
               fileName={activeItem?.file.file.name ?? 'nerita-result'}
               imageFile={activeItem?.file.file}
+              vectorLayer={drawingMode ? vectorLayer : null}
               disabled={running}
             />
             <HistoryPanel onSelect={handleHistorySelect} refreshKey={historyRefreshKey} />

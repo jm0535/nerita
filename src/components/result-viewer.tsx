@@ -1,25 +1,32 @@
 'use client'
 
 import { useMemo } from 'react'
-import { FileText, Table2, MapPin, Code2, Eye, Tag } from 'lucide-react'
+import { FileText, Table2, MapPin, Code2, Eye, Tag, Spline } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import type { OcrResult } from '@/lib/ocr'
 import { detectGeoPoints, detectTables, toParagraphs } from '@/lib/structured-extraction'
+import { vectorLayerToSvg, type VectorLayer } from '@/lib/vectorize'
 
 type Props = {
   result: OcrResult | null
   fileName: string
+  vectorLayer?: VectorLayer | null
+  imagePreview?: string
 }
 
-export function ResultViewer({ result, fileName }: Props) {
+export function ResultViewer({ result, fileName, vectorLayer, imagePreview }: Props) {
   const tables = useMemo(() => (result ? detectTables(result) : []), [result])
   const geo = useMemo(() => (result ? detectGeoPoints(result) : []), [result])
   const paragraphs = useMemo(() => (result ? toParagraphs(result.text) : []), [result])
   const fields = result?.fields ?? {}
   const fieldCount = Object.entries(fields).filter(([, v]) => v && String(v).trim()).length
+  const svgString = useMemo(
+    () => (vectorLayer ? vectorLayerToSvg(vectorLayer) : ''),
+    [vectorLayer],
+  )
   const xmlPreview = useMemo(() => {
     if (!result) return ''
     const doc = {
@@ -34,10 +41,11 @@ export function ResultViewer({ result, fileName }: Props) {
         lineCount: result.lines.length,
         wordCount: result.words.length,
         fields: result.fields ?? {},
+        vectorPrimitives: vectorLayer?.totalPrimitives ?? 0,
       },
     }
     return JSON.stringify(doc, null, 2)
-  }, [result, fileName])
+  }, [result, fileName, vectorLayer])
 
   if (!result) {
     return (
@@ -120,6 +128,15 @@ export function ResultViewer({ result, fileName }: Props) {
                 </Badge>
               )}
             </TabsTrigger>
+            {vectorLayer && (
+              <TabsTrigger value="vectors" className="gap-1">
+                <Spline className="w-3.5 h-3.5 text-amber-600" />
+                Vectors
+                <Badge variant="secondary" className="ml-1 text-[9px] h-4 px-1 bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300">
+                  {vectorLayer.totalPrimitives}
+                </Badge>
+              </TabsTrigger>
+            )}
             <TabsTrigger value="structure" className="gap-1">
               <Code2 className="w-3.5 h-3.5" />
               Structure
@@ -252,6 +269,54 @@ export function ResultViewer({ result, fileName }: Props) {
             )}
           </TabsContent>
 
+          <TabsContent value="vectors" className="mt-3">
+            {vectorLayer && vectorLayer.totalPrimitives > 0 ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-2">
+                  <VectorStat label="Lines" value={vectorLayer.lines.length} color="text-amber-600" />
+                  <VectorStat label="Circles" value={vectorLayer.circles.length} color="text-amber-600" />
+                  <VectorStat label="Polygons" value={vectorLayer.polygons.length} color="text-amber-600" />
+                </div>
+                <div className="rounded-md border bg-amber-50/30 dark:bg-amber-950/10 p-3">
+                  <p className="text-[11px] text-muted-foreground mb-2">
+                    Vectorized preview — original image overlaid with detected geometry
+                  </p>
+                  <div
+                    className="relative w-full bg-white rounded border overflow-hidden"
+                    style={{ aspectRatio: `${vectorLayer.width} / ${vectorLayer.height}` }}
+                  >
+                    {imagePreview && (
+                      <img
+                        src={imagePreview}
+                        alt="original"
+                        className="absolute inset-0 w-full h-full object-contain opacity-40"
+                      />
+                    )}
+                    <div
+                      className="absolute inset-0 w-full h-full"
+                      dangerouslySetInnerHTML={{
+                        __html: svgString
+                          .replace('<svg ', '<svg preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;" ')
+                          .replace(/stroke="black"/g, 'stroke="#d97706"')
+                          .replace(/stroke-width="2"/g, 'stroke-width="1.5"'),
+                      }}
+                    />
+                  </div>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Export to <strong>SVG</strong> for web, <strong>DXF</strong> for AutoCAD/LibreCAD/QCAD/FreeCAD,
+                  or <strong>SHP</strong> for QGIS/ArcGIS.
+                </p>
+              </div>
+            ) : (
+              <EmptyState
+                icon={<Spline className="w-8 h-8" />}
+                title="No vectors yet"
+                hint="Enable Drawing Mode and click 'Vectorize drawing' to extract line geometry from this image."
+              />
+            )}
+          </TabsContent>
+
           <TabsContent value="structure" className="mt-3">
             <ScrollArea className="h-[460px] w-full rounded-md border bg-zinc-950 p-4">
               <pre className="text-xs text-teal-300 font-mono whitespace-pre-wrap">
@@ -282,6 +347,15 @@ function EmptyState({
       <div className="flex justify-center text-muted-foreground mb-2">{icon}</div>
       <p className="font-medium text-sm">{title}</p>
       <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">{hint}</p>
+    </div>
+  )
+}
+
+function VectorStat({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div className="rounded-md border bg-card p-2 text-center">
+      <p className="text-[10px] text-muted-foreground">{label}</p>
+      <p className={`text-lg font-bold ${color}`}>{value}</p>
     </div>
   )
 }

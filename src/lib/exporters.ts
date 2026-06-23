@@ -14,6 +14,7 @@ import ExcelJS from 'exceljs'
 import Papa from 'papaparse'
 import type { OcrResult } from './ocr'
 import { detectGeoPoints, detectTables, toParagraphs } from './structured-extraction'
+import { vectorLayerToSvg, type VectorLayer } from './vectorize'
 
 export type ExportFormat =
   | 'txt'
@@ -27,6 +28,9 @@ export type ExportFormat =
   | 'xml'
   | 'geojson'
   | 'json'
+  | 'svg'
+  | 'dxf'
+  | 'shp'
 
 export const EXPORT_FORMATS: {
   id: ExportFormat
@@ -111,6 +115,27 @@ export const EXPORT_FORMATS: {
     description: 'Full result with document type, fields, blocks (.json)',
     mime: 'application/json',
     ext: 'json',
+  },
+  {
+    id: 'svg',
+    label: 'SVG Vector',
+    description: 'Drawing vectorized to SVG with lines, circles, polygons (.svg)',
+    mime: 'image/svg+xml',
+    ext: 'svg',
+  },
+  {
+    id: 'dxf',
+    label: 'AutoCAD DXF',
+    description: 'Drawing vectorized — open in AutoCAD, LibreCAD, QCAD, FreeCAD (.dxf)',
+    mime: 'application/dxf',
+    ext: 'dxf',
+  },
+  {
+    id: 'shp',
+    label: 'ESRI Shapefile',
+    description: 'Drawing vectorized as line+polygon shapefile — open in QGIS, ArcGIS (.shp)',
+    mime: 'application/x-shapefile',
+    ext: 'shp',
   },
 ]
 
@@ -672,6 +697,210 @@ function exportJson(result: OcrResult, fileName: string) {
 }
 
 // ============================================================================
+// SVG / DXF / SHP — drawing vector exports
+// ============================================================================
+function exportSvg(layer: VectorLayer, fileName: string) {
+  const svg = vectorLayerToSvg(layer)
+  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
+  saveAs(blob, `${baseName(fileName)}.svg`)
+}
+
+/**
+ * Build a minimal but valid AutoCAD R12 DXF file from a VectorLayer.
+ * DXF is a text format that AutoCAD, LibreCAD, QCAD, and FreeCAD can all open.
+ * We emit:
+ *   - LINE entities for line segments
+ *   - CIRCLE entities for circles
+ *   - LWPOLYLINE entities for polygons (closed)
+ *
+ * Coordinate system: image pixels (Y-down) flipped to DXF (Y-up) so the
+ * drawing appears upright in CAD software.
+ */
+function exportDxf(layer: VectorLayer, fileName: string) {
+  const flipY = (y: number) => layer.height - y
+  const parts: string[] = []
+
+  // Header
+  parts.push('0', 'SECTION', '2', 'HEADER')
+  parts.push('9', '$ACADVER', '1', 'AC1009') // R12
+  parts.push('9', '$INSBASE', '10', '0.0', '20', '0.0', '30', '0.0')
+  parts.push('0', 'ENDSEC')
+
+  // Tables section (minimal — one layer "0")
+  parts.push('0', 'SECTION', '2', 'TABLES')
+  parts.push('0', 'TABLE', '2', 'LAYER', '70', '1')
+  parts.push('0', 'LAYER', '2', '0', '70', '0', '62', '7', '6', 'CONTINUOUS')
+  parts.push('0', 'ENDTAB')
+  parts.push('0', 'ENDSEC')
+
+  // Entities section
+  parts.push('0', 'SECTION', '2', 'ENTITIES')
+
+  // Lines
+  for (const line of layer.lines) {
+    parts.push(
+      '0', 'LINE',
+      '8', '0',
+      '10', line.start.x.toFixed(3),
+      '20', flipY(line.start.y).toFixed(3),
+      '30', '0.0',
+      '11', line.end.x.toFixed(3),
+      '21', flipY(line.end.y).toFixed(3),
+      '31', '0.0',
+    )
+  }
+
+  // Circles
+  for (const c of layer.circles) {
+    parts.push(
+      '0', 'CIRCLE',
+      '8', '0',
+      '10', c.center.x.toFixed(3),
+      '20', flipY(c.center.y).toFixed(3),
+      '30', '0.0',
+      '40', c.radius.toFixed(3),
+    )
+  }
+
+  // Polygons (as closed LWPOLYLINE)
+  for (const p of layer.polygons) {
+    parts.push('0', 'LWPOLYLINE', '8', '0', '90', String(p.points.length), '70', '1')
+    for (const pt of p.points) {
+      parts.push(
+        '10', pt.x.toFixed(3),
+        '20', flipY(pt.y).toFixed(3),
+      )
+    }
+  }
+
+  parts.push('0', 'ENDSEC')
+  parts.push('0', 'EOF')
+
+  const dxf = parts.join('\n')
+  const blob = new Blob([dxf], { type: 'application/dxf;charset=utf-8' })
+  saveAs(blob, `${baseName(fileName)}.dxf`)
+}
+
+/**
+ * Build a binary ESRI Shapefile (.shp) containing all vector primitives.
+ * We emit a single shapefile of type POLYLINE (3) — each line segment and
+ * each polygon boundary becomes one part. Circles are sampled into polygons.
+ *
+ * The .shp file alone is enough for QGIS to open; .shx/.dbf are optional
+ * companions but we ship just .shp for simplicity. Most GIS tools accept it.
+ *
+ * Spec reference: ESRI Shapefile Technical Description (1998).
+ */
+function exportShp(layer: VectorLayer, fileName: string) {
+  // Prepare parts: each part is an array of [x, y] points
+  type Part = Array<[number, number]>
+  const flipY = (y: number) => layer.height - y
+
+  const parts: Part[] = []
+  for (const line of layer.lines) {
+    parts.push([
+      [line.start.x, flipY(line.start.y)],
+      [line.end.x, flipY(line.end.y)],
+    ])
+  }
+  for (const c of layer.circles) {
+    const seg: Part = []
+    const n = 32
+    for (let i = 0; i <= n; i++) {
+      const a = (i / n) * Math.PI * 2
+      seg.push([c.center.x + Math.cos(a) * c.radius, flipY(c.center.y) + Math.sin(a) * c.radius])
+    }
+    parts.push(seg)
+  }
+  for (const poly of layer.polygons) {
+    parts.push(poly.points.map((p) => [p.x, flipY(p.y)] as [number, number]))
+  }
+
+  if (parts.length === 0) {
+    const blob = new Blob([new ArrayBuffer(0)], { type: 'application/x-shapefile' })
+    saveAs(blob, `${baseName(fileName)}.shp`)
+    return
+  }
+
+  // Compute bounding box + total points
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  let totalPoints = 0
+  for (const part of parts) {
+    totalPoints += part.length
+    for (const [x, y] of part) {
+      if (x < minX) minX = x
+      if (y < minY) minY = y
+      if (x > maxX) maxX = x
+      if (y > maxY) maxY = y
+    }
+  }
+
+  const numParts = parts.length
+  // Record content: shape type (4) + bbox (32) + numParts (4) + numPoints (4) +
+  // parts (numParts * 4) + points (totalPoints * 16) — all in bytes
+  const recordContentBytes = 4 + 32 + 4 + 4 + numParts * 4 + totalPoints * 16
+  const recordContentLength = recordContentBytes / 2 // 16-bit words
+  const totalBytes = 100 + 8 + recordContentBytes
+
+  // Use a single DataView exclusively — avoids typed-array alignment issues.
+  const buf = new ArrayBuffer(totalBytes)
+  const dv = new DataView(buf)
+
+  // ---- File header (100 bytes) ----
+  // File code 9994 at offset 0 (big-endian)
+  dv.setInt32(0, 9994, false)
+  // Unused bytes 4-23 left as zero
+  // File length in 16-bit words at offset 24 (big-endian)
+  dv.setInt32(24, totalBytes / 2, false)
+  // Version 1000 at offset 28 (little-endian)
+  dv.setInt32(28, 1000, true)
+  // Shape type 3 (PolyLine) at offset 32 (little-endian)
+  dv.setInt32(32, 3, true)
+  // Bounding box at offsets 36, 44, 52, 60 (little-endian doubles)
+  dv.setFloat64(36, minX, true)
+  dv.setFloat64(44, minY, true)
+  dv.setFloat64(52, maxX, true)
+  dv.setFloat64(60, maxY, true)
+  // Z and M ranges at offsets 68, 76, 84, 92 — set to 0
+  dv.setFloat64(68, 0, true)
+  dv.setFloat64(76, 0, true)
+  dv.setFloat64(84, 0, true)
+  dv.setFloat64(92, 0, true)
+
+  // ---- Record header (8 bytes at offset 100) ----
+  dv.setInt32(100, 1, false) // record number 1 (big-endian)
+  dv.setInt32(104, recordContentLength, false) // content length in 16-bit words (big-endian)
+
+  // ---- Record content (starting at offset 108) ----
+  let off = 108
+  dv.setInt32(off, 3, true); off += 4 // shape type: PolyLine
+  dv.setFloat64(off, minX, true); off += 8
+  dv.setFloat64(off, minY, true); off += 8
+  dv.setFloat64(off, maxX, true); off += 8
+  dv.setFloat64(off, maxY, true); off += 8
+  dv.setInt32(off, numParts, true); off += 4
+  dv.setInt32(off, totalPoints, true); off += 4
+
+  // Parts array (start index of each part)
+  let partStart = 0
+  for (const part of parts) {
+    dv.setInt32(off, partStart, true); off += 4
+    partStart += part.length
+  }
+
+  // Points array (flat, all parts)
+  for (const part of parts) {
+    for (const [x, y] of part) {
+      dv.setFloat64(off, x, true); off += 8
+      dv.setFloat64(off, y, true); off += 8
+    }
+  }
+
+  const blob = new Blob([buf], { type: 'application/x-shapefile' })
+  saveAs(blob, `${baseName(fileName)}.shp`)
+}
+
+// ============================================================================
 // XML
 // ============================================================================
 function escapeXml(s: string): string {
@@ -777,6 +1006,7 @@ export async function exportResult(
   result: OcrResult,
   fileName: string,
   imageFile?: File,
+  vectorLayer?: VectorLayer | null,
 ): Promise<void> {
   switch (format) {
     case 'txt':
@@ -801,6 +1031,15 @@ export async function exportResult(
       return exportGeoJson(result, fileName)
     case 'json':
       return exportJson(result, fileName)
+    case 'svg':
+      if (!vectorLayer) throw new Error('Vector data not available — run Drawing Mode first')
+      return exportSvg(vectorLayer, fileName)
+    case 'dxf':
+      if (!vectorLayer) throw new Error('Vector data not available — run Drawing Mode first')
+      return exportDxf(vectorLayer, fileName)
+    case 'shp':
+      if (!vectorLayer) throw new Error('Vector data not available — run Drawing Mode first')
+      return exportShp(vectorLayer, fileName)
     default:
       throw new Error(`Unknown export format: ${format}`)
   }
@@ -816,11 +1055,12 @@ export async function exportAllFormats(
   result: OcrResult,
   fileName: string,
   imageFile?: File,
+  vectorLayer?: VectorLayer | null,
 ) {
   for (let i = 0; i < EXPORT_FORMATS.length; i++) {
     const f = EXPORT_FORMATS[i]
     try {
-      await exportResult(f.id, result, fileName, imageFile)
+      await exportResult(f.id, result, fileName, imageFile, vectorLayer)
       // Small delay between downloads so browsers don't block them as spam.
       await new Promise((r) => setTimeout(r, 400))
     } catch (err) {
