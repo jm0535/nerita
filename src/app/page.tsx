@@ -143,7 +143,7 @@ export default function Home() {
   const doneCount = items.filter((i) => i.status === 'done').length
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="bg-background min-h-screen flex flex-col">
       {/* Header */}
       <header className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
@@ -221,7 +221,7 @@ export default function Home() {
       </section>
 
       {/* Main */}
-      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
           {/* Left column: upload + settings */}
           <div className="lg:col-span-4 space-y-5">
