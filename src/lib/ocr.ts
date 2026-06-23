@@ -27,6 +27,19 @@ export type OcrBlock = {
   paragraph?: boolean
 }
 
+export type DocumentType =
+  | 'receipt'
+  | 'invoice'
+  | 'id-card'
+  | 'form'
+  | 'table'
+  | 'handwritten'
+  | 'book-page'
+  | 'screenshot'
+  | 'mixed'
+  | 'other'
+  | 'unknown'
+
 export type OcrResult = {
   text: string
   confidence: number
@@ -34,6 +47,12 @@ export type OcrResult = {
   lines: OcrLine[]
   words: OcrWord[]
   language: string
+  /** Which engine produced this result */
+  engine?: 'tesseract' | 'vision-ai'
+  /** Document type detected by vision AI (unknown for pure tesseract) */
+  documentType?: DocumentType
+  /** Structured key-value fields extracted from the document */
+  fields?: Record<string, string>
 }
 
 /**
@@ -213,6 +232,9 @@ export async function runOcr(
       lines,
       words,
       language,
+      engine: 'tesseract',
+      documentType: 'unknown',
+      fields: {},
     }
   } finally {
     await worker.terminate()

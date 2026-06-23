@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { FileText, Table2, MapPin, Code2, Eye } from 'lucide-react'
+import { FileText, Table2, MapPin, Code2, Eye, Tag } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
@@ -18,6 +18,8 @@ export function ResultViewer({ result, fileName }: Props) {
   const tables = useMemo(() => (result ? detectTables(result) : []), [result])
   const geo = useMemo(() => (result ? detectGeoPoints(result) : []), [result])
   const paragraphs = useMemo(() => (result ? toParagraphs(result.text) : []), [result])
+  const fields = result?.fields ?? {}
+  const fieldCount = Object.entries(fields).filter(([, v]) => v && String(v).trim()).length
   const xmlPreview = useMemo(() => {
     if (!result) return ''
     const doc = {
@@ -25,10 +27,13 @@ export function ResultViewer({ result, fileName }: Props) {
         '@fileName': fileName,
         '@language': result.language,
         '@confidence': result.confidence.toFixed(2),
+        '@engine': result.engine ?? 'tesseract',
+        '@documentType': result.documentType ?? 'unknown',
         text: result.text,
         blockCount: result.blocks.length,
         lineCount: result.lines.length,
         wordCount: result.words.length,
+        fields: result.fields ?? {},
       },
     }
     return JSON.stringify(doc, null, 2)
@@ -51,7 +56,24 @@ export function ResultViewer({ result, fileName }: Props) {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <CardTitle className="text-base truncate">{fileName}</CardTitle>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {result.engine && (
+              <Badge
+                variant="outline"
+                className={`text-[10px] gap-1 ${
+                  result.engine === 'vision-ai'
+                    ? 'border-violet-300 text-violet-700 dark:border-violet-800 dark:text-violet-400'
+                    : 'border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-400'
+                }`}
+              >
+                {result.engine === 'vision-ai' ? '🧠 Vision AI' : '⚡ Tesseract'}
+              </Badge>
+            )}
+            {result.documentType && result.documentType !== 'unknown' && (
+              <Badge variant="outline" className="text-[10px] capitalize border-teal-300 text-teal-700 dark:border-teal-800 dark:text-teal-400">
+                {result.documentType}
+              </Badge>
+            )}
             <Badge variant="outline" className="text-[10px]">
               {result.language.toUpperCase()}
             </Badge>
@@ -70,6 +92,15 @@ export function ResultViewer({ result, fileName }: Props) {
             <TabsTrigger value="text" className="gap-1">
               <FileText className="w-3.5 h-3.5" />
               Text
+            </TabsTrigger>
+            <TabsTrigger value="fields" className="gap-1">
+              <Tag className="w-3.5 h-3.5" />
+              Fields
+              {fieldCount > 0 && (
+                <Badge variant="secondary" className="ml-1 text-[9px] h-4 px-1">
+                  {fieldCount}
+                </Badge>
+              )}
             </TabsTrigger>
             <TabsTrigger value="tables" className="gap-1">
               <Table2 className="w-3.5 h-3.5" />
@@ -106,18 +137,51 @@ export function ResultViewer({ result, fileName }: Props) {
             </p>
           </TabsContent>
 
+          <TabsContent value="fields" className="mt-3">
+            {fieldCount === 0 ? (
+              <EmptyState
+                icon={<Tag className="w-8 h-8" />}
+                title="No structured fields detected"
+                hint="Use the Vision AI engine to extract structured key-value fields (merchant, date, total, etc.) from receipts, invoices, ID cards, and forms."
+              />
+            ) : (
+              <div className="rounded-md border overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead className="bg-zinc-100 dark:bg-zinc-900">
+                    <tr>
+                      <th className="px-3 py-1.5 text-left font-semibold w-1/3">Field</th>
+                      <th className="px-3 py-1.5 text-left font-semibold">Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(fields)
+                      .filter(([, v]) => v && String(v).trim())
+                      .map(([key, value]) => (
+                        <tr key={key} className="border-t">
+                          <td className="px-3 py-1.5 font-medium text-muted-foreground capitalize align-top">
+                            {key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())}
+                          </td>
+                          <td className="px-3 py-1.5 font-mono break-all">{String(value)}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </TabsContent>
+
           <TabsContent value="tables" className="mt-3">
             {tables.length === 0 ? (
               <EmptyState
                 icon={<Table2 className="w-8 h-8" />}
                 title="No tables detected"
-                hint="Tables are detected when at least 2 consecutive rows share the same column count (split by 2+ spaces)."
+                hint="Tables are detected when consecutive rows share column boundaries. Use Vision AI for complex tables."
               />
             ) : (
               <div className="space-y-4">
                 {tables.map((t, idx) => (
                   <div key={idx} className="rounded-md border overflow-hidden">
-                    <div className="bg-emerald-600/10 px-3 py-1.5 text-xs font-medium">
+                    <div className="bg-teal-600/10 px-3 py-1.5 text-xs font-medium">
                       Table {idx + 1} · {t.rows.length} rows × {t.headers.length} cols
                     </div>
                     <div className="overflow-x-auto">
@@ -190,12 +254,12 @@ export function ResultViewer({ result, fileName }: Props) {
 
           <TabsContent value="structure" className="mt-3">
             <ScrollArea className="h-[460px] w-full rounded-md border bg-zinc-950 p-4">
-              <pre className="text-xs text-emerald-300 font-mono whitespace-pre-wrap">
+              <pre className="text-xs text-teal-300 font-mono whitespace-pre-wrap">
                 {xmlPreview}
               </pre>
             </ScrollArea>
             <p className="text-[11px] text-muted-foreground mt-2">
-              Showing structure summary · export as XML to get full blocks/lines/words tree.
+              Showing structure summary · export as JSON or XML to get full blocks/lines/words tree.
             </p>
           </TabsContent>
         </Tabs>

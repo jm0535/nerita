@@ -12,17 +12,18 @@ import type { OcrResult } from '@/lib/ocr'
 type Props = {
   result: OcrResult | null
   fileName: string
+  imageFile?: File
   disabled?: boolean
 }
 
-export function ExportPanel({ result, fileName, disabled }: Props) {
+export function ExportPanel({ result, fileName, imageFile, disabled }: Props) {
   const [busy, setBusy] = useState<ExportFormat | 'all' | null>(null)
 
   const handleExport = async (format: ExportFormat) => {
     if (!result) return
     setBusy(format)
     try {
-      await exportResult(format, result, fileName)
+      await exportResult(format, result, fileName, imageFile)
     } catch (err) {
       console.error(err)
     } finally {
@@ -34,7 +35,7 @@ export function ExportPanel({ result, fileName, disabled }: Props) {
     if (!result) return
     setBusy('all')
     try {
-      await exportAllFormats(result, fileName)
+      await exportAllFormats(result, fileName, imageFile)
     } finally {
       setBusy(null)
     }
@@ -45,7 +46,7 @@ export function ExportPanel({ result, fileName, disabled }: Props) {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
-            <FileDown className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <FileDown className="w-4 h-4 text-teal-600 dark:text-teal-400" />
             Export
           </CardTitle>
           {result && (
@@ -72,11 +73,11 @@ export function ExportPanel({ result, fileName, disabled }: Props) {
                     >
                       <span className="flex items-center gap-1.5 w-full">
                         {isBusy ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-teal-600" />
                         ) : (
-                          <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                          <Download className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                         )}
-                        <span className="text-xs font-semibold uppercase">{f.ext}</span>
+                        <span className="text-[10px] font-semibold uppercase">{f.ext}</span>
                       </span>
                       <span className="text-[10px] text-muted-foreground leading-tight line-clamp-2">
                         {f.label}
@@ -96,7 +97,7 @@ export function ExportPanel({ result, fileName, disabled }: Props) {
         <Button
           variant="default"
           size="sm"
-          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+          className="w-full bg-teal-600 hover:bg-teal-700 text-white"
           disabled={disabled || !result || busy !== null}
           onClick={handleAll}
         >
@@ -105,7 +106,7 @@ export function ExportPanel({ result, fileName, disabled }: Props) {
           ) : (
             <Layers className="w-4 h-4 mr-2" />
           )}
-          Download all 9 formats
+          Download all {EXPORT_FORMATS.length} formats
         </Button>
       </CardContent>
     </Card>

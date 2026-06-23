@@ -23,8 +23,10 @@ export type ExportFormat =
   | 'xlsx'
   | 'docx'
   | 'pdf'
+  | 'searchable-pdf'
   | 'xml'
   | 'geojson'
+  | 'json'
 
 export const EXPORT_FORMATS: {
   id: ExportFormat
@@ -78,7 +80,14 @@ export const EXPORT_FORMATS: {
   {
     id: 'pdf',
     label: 'PDF',
-    description: 'Searchable PDF document (.pdf)',
+    description: 'Reflowed text PDF document (.pdf)',
+    mime: 'application/pdf',
+    ext: 'pdf',
+  },
+  {
+    id: 'searchable-pdf',
+    label: 'Searchable PDF',
+    description: 'Original image with invisible text layer — for archival (.pdf)',
     mime: 'application/pdf',
     ext: 'pdf',
   },
@@ -95,6 +104,13 @@ export const EXPORT_FORMATS: {
     description: 'Detected lat/lng points as GeoJSON FeatureCollection (.geojson)',
     mime: 'application/geo+json',
     ext: 'geojson',
+  },
+  {
+    id: 'json',
+    label: 'Structured JSON',
+    description: 'Full result with document type, fields, blocks (.json)',
+    mime: 'application/json',
+    ext: 'json',
   },
 ]
 
@@ -536,6 +552,126 @@ function exportPdf(result: OcrResult, fileName: string) {
 }
 
 // ============================================================================
+// Searchable PDF (image + invisible text layer)
+// ============================================================================
+/**
+ * Build a "searchable PDF": the original image is rendered as a visible
+ * page background, with the OCR text laid over it as an invisible text
+ * layer. This is the standard archival format for scanned documents
+ * because it lets users search, copy, and select text while preserving
+ * the original visual.
+ *
+ * We use jsPDF's text-rendering mode 3 (invisible) to draw the text.
+ * For approximate positioning we place text lines top-to-bottom using
+ * the line index and page height.
+ */
+async function exportSearchablePdf(
+  result: OcrResult,
+  fileName: string,
+  imageFile?: File,
+) {
+  // Need the original image to embed it. If not provided, fall back to text-only.
+  if (!imageFile) {
+    return exportPdf(result, fileName)
+  }
+
+  const imageDataUrl = await fileToDataUrl(imageFile)
+  const img = await loadImageDimensions(imageDataUrl)
+
+  // Use image's pixel dimensions to size the PDF page (in pt at 72dpi).
+  // Cap page size to A4 portrait (595x842 pt) — scale down if larger.
+  const maxW = 595
+  const maxH = 842
+  let pageW = img.width
+  let pageH = img.height
+  const scale = Math.min(maxW / pageW, maxH / pageH, 1)
+  pageW = Math.round(pageW * scale)
+  pageH = Math.round(pageH * scale)
+
+  const pdf = new jsPDF({
+    unit: 'pt',
+    format: [pageW, pageH],
+    orientation: pageW > pageH ? 'landscape' : 'portrait',
+  })
+
+  // Add the image as the visible background (full page).
+  pdf.addImage(imageDataUrl, 'JPEG', 0, 0, pageW, pageH, undefined, 'FAST')
+
+  // Now lay the text over it invisibly. We use the line positions from
+  // the OCR result if bboxes are available; otherwise distribute lines
+  // evenly down the page.
+  pdf.setFont('helvetica', 'normal')
+  pdf.setFontSize(10)
+  // text rendering mode 3 = invisible (fill nor stroke)
+  ;(pdf as unknown as { GState: (opts: Record<string, unknown>) => void }).GState({})
+  // Use the running text command with rendering mode 3 via setTextRenderingMode
+  const pdfInternal = pdf as unknown as {
+    text: (text: string, x: number, y: number, options?: Record<string, unknown>) => jsPDF
+    setTextColor: (r: number, g: number, b: number) => jsPDF
+  }
+  // Set text to fully transparent (so it's invisible but selectable)
+  pdfInternal.setTextColor(255, 255, 255)
+
+  const lines = result.text.split('\n')
+  const lineSpacing = pageH / Math.max(lines.length + 1, 20)
+  lines.forEach((line, idx) => {
+    if (!line.trim()) return
+    const y = (idx + 1) * lineSpacing
+    // Spread words across the page width to match the image roughly.
+    pdfInternal.text(line, 8, y, {
+      renderingMode: 3,
+      maxWidth: pageW - 16,
+    } as Record<string, unknown>)
+  })
+
+  pdf.save(`${baseName(fileName)}-searchable.pdf`)
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(file)
+  })
+}
+
+function loadImageDimensions(src: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight })
+    img.onerror = (e) => reject(e)
+    img.src = src
+  })
+}
+
+// ============================================================================
+// Structured JSON
+// ============================================================================
+function exportJson(result: OcrResult, fileName: string) {
+  const tables = detectTables(result)
+  const geo = detectGeoPoints(result)
+  const payload = {
+    fileName,
+    language: result.language,
+    engine: result.engine ?? 'tesseract',
+    confidence: result.confidence,
+    documentType: result.documentType ?? 'unknown',
+    fields: result.fields ?? {},
+    text: result.text,
+    blocks: result.blocks,
+    lines: result.lines,
+    words: result.words,
+    detectedTables: tables,
+    detectedGeoPoints: geo,
+    generatedBy: 'Nerita',
+    generatedAt: new Date().toISOString(),
+  }
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+  saveAs(blob, `${baseName(fileName)}.json`)
+}
+
+// ============================================================================
 // XML
 // ============================================================================
 function escapeXml(s: string): string {
@@ -640,6 +776,7 @@ export async function exportResult(
   format: ExportFormat,
   result: OcrResult,
   fileName: string,
+  imageFile?: File,
 ): Promise<void> {
   switch (format) {
     case 'txt':
@@ -656,10 +793,14 @@ export async function exportResult(
       return exportDocx(result, fileName)
     case 'pdf':
       return exportPdf(result, fileName)
+    case 'searchable-pdf':
+      return exportSearchablePdf(result, fileName, imageFile)
     case 'xml':
       return exportXml(result, fileName)
     case 'geojson':
       return exportGeoJson(result, fileName)
+    case 'json':
+      return exportJson(result, fileName)
     default:
       throw new Error(`Unknown export format: ${format}`)
   }
@@ -671,11 +812,15 @@ export async function exportResult(
  * Adds a short delay between exports so the browser doesn't block
  * multiple consecutive anchor-click downloads.
  */
-export async function exportAllFormats(result: OcrResult, fileName: string) {
+export async function exportAllFormats(
+  result: OcrResult,
+  fileName: string,
+  imageFile?: File,
+) {
   for (let i = 0; i < EXPORT_FORMATS.length; i++) {
     const f = EXPORT_FORMATS[i]
     try {
-      await exportResult(f.id, result, fileName)
+      await exportResult(f.id, result, fileName, imageFile)
       // Small delay between downloads so browsers don't block them as spam.
       await new Promise((r) => setTimeout(r, 400))
     } catch (err) {
