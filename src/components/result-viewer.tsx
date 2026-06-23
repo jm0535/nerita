@@ -1,0 +1,223 @@
+'use client'
+
+import { useMemo } from 'react'
+import { FileText, Table2, MapPin, Code2, Eye } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import type { OcrResult } from '@/lib/ocr'
+import { detectGeoPoints, detectTables, toParagraphs } from '@/lib/structured-extraction'
+
+type Props = {
+  result: OcrResult | null
+  fileName: string
+}
+
+export function ResultViewer({ result, fileName }: Props) {
+  const tables = useMemo(() => (result ? detectTables(result) : []), [result])
+  const geo = useMemo(() => (result ? detectGeoPoints(result) : []), [result])
+  const paragraphs = useMemo(() => (result ? toParagraphs(result.text) : []), [result])
+  const xmlPreview = useMemo(() => {
+    if (!result) return ''
+    const doc = {
+      document: {
+        '@fileName': fileName,
+        '@language': result.language,
+        '@confidence': result.confidence.toFixed(2),
+        text: result.text,
+        blockCount: result.blocks.length,
+        lineCount: result.lines.length,
+        wordCount: result.words.length,
+      },
+    }
+    return JSON.stringify(doc, null, 2)
+  }, [result, fileName])
+
+  if (!result) {
+    return (
+      <Card className="h-full min-h-[400px]">
+        <CardContent className="h-full flex flex-col items-center justify-center text-center p-8 text-muted-foreground">
+          <Eye className="w-10 h-10 mb-3 opacity-40" />
+          <p className="font-medium">No OCR result yet</p>
+          <p className="text-sm mt-1">Upload an image and run OCR to see the extracted content here.</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="h-full">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <CardTitle className="text-base truncate">{fileName}</CardTitle>
+          <div className="flex items-center gap-1.5">
+            <Badge variant="outline" className="text-[10px]">
+              {result.language.toUpperCase()}
+            </Badge>
+            <Badge variant="secondary" className="text-[10px]">
+              {result.confidence.toFixed(1)}% conf
+            </Badge>
+            <Badge variant="secondary" className="text-[10px]">
+              {result.words.length} words
+            </Badge>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="text" className="w-full">
+          <TabsList className="w-full justify-start overflow-x-auto h-auto">
+            <TabsTrigger value="text" className="gap-1">
+              <FileText className="w-3.5 h-3.5" />
+              Text
+            </TabsTrigger>
+            <TabsTrigger value="tables" className="gap-1">
+              <Table2 className="w-3.5 h-3.5" />
+              Tables
+              {tables.length > 0 && (
+                <Badge variant="secondary" className="ml-1 text-[9px] h-4 px-1">
+                  {tables.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="geo" className="gap-1">
+              <MapPin className="w-3.5 h-3.5" />
+              Geo
+              {geo.length > 0 && (
+                <Badge variant="secondary" className="ml-1 text-[9px] h-4 px-1">
+                  {geo.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="structure" className="gap-1">
+              <Code2 className="w-3.5 h-3.5" />
+              Structure
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="text" className="mt-3">
+            <ScrollArea className="h-[460px] w-full rounded-md border bg-zinc-50 dark:bg-zinc-950 p-4">
+              <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">
+                {result.text || '(no text extracted)'}
+              </pre>
+            </ScrollArea>
+            <p className="text-[11px] text-muted-foreground mt-2">
+              {paragraphs.length} paragraph{paragraphs.length !== 1 && 's'} detected
+            </p>
+          </TabsContent>
+
+          <TabsContent value="tables" className="mt-3">
+            {tables.length === 0 ? (
+              <EmptyState
+                icon={<Table2 className="w-8 h-8" />}
+                title="No tables detected"
+                hint="Tables are detected when at least 2 consecutive rows share the same column count (split by 2+ spaces)."
+              />
+            ) : (
+              <div className="space-y-4">
+                {tables.map((t, idx) => (
+                  <div key={idx} className="rounded-md border overflow-hidden">
+                    <div className="bg-emerald-600/10 px-3 py-1.5 text-xs font-medium">
+                      Table {idx + 1} · {t.rows.length} rows × {t.headers.length} cols
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead className="bg-zinc-100 dark:bg-zinc-900">
+                          <tr>
+                            {t.headers.map((h, i) => (
+                              <th key={i} className="px-2 py-1.5 text-left font-semibold border-b">
+                                {h}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {t.rows.map((row, ri) => (
+                            <tr key={ri} className="border-b last:border-0">
+                              {row.map((c, ci) => (
+                                <td key={ci} className="px-2 py-1.5 border-r last:border-0">
+                                  {c}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="geo" className="mt-3">
+            {geo.length === 0 ? (
+              <EmptyState
+                icon={<MapPin className="w-8 h-8" />}
+                title="No geo coordinates found"
+                hint="Latitude/longitude pairs like '40.7128, -74.0060' will be detected automatically."
+              />
+            ) : (
+              <div className="rounded-md border overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead className="bg-zinc-100 dark:bg-zinc-900">
+                    <tr>
+                      <th className="px-2 py-1.5 text-left">#</th>
+                      <th className="px-2 py-1.5 text-left">Latitude</th>
+                      <th className="px-2 py-1.5 text-left">Longitude</th>
+                      <th className="px-2 py-1.5 text-left">Raw text</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {geo.map((g) => {
+                      const [lng, lat] = g.geometry.coordinates
+                      return (
+                        <tr key={g.properties.index} className="border-t">
+                          <td className="px-2 py-1.5">{g.properties.index + 1}</td>
+                          <td className="px-2 py-1.5 font-mono">{lat}</td>
+                          <td className="px-2 py-1.5 font-mono">{lng}</td>
+                          <td className="px-2 py-1.5 font-mono text-muted-foreground">
+                            {g.properties.raw}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="structure" className="mt-3">
+            <ScrollArea className="h-[460px] w-full rounded-md border bg-zinc-950 p-4">
+              <pre className="text-xs text-emerald-300 font-mono whitespace-pre-wrap">
+                {xmlPreview}
+              </pre>
+            </ScrollArea>
+            <p className="text-[11px] text-muted-foreground mt-2">
+              Showing structure summary · export as XML to get full blocks/lines/words tree.
+            </p>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  )
+}
+
+function EmptyState({
+  icon,
+  title,
+  hint,
+}: {
+  icon: React.ReactNode
+  title: string
+  hint: string
+}) {
+  return (
+    <div className="rounded-md border border-dashed py-12 px-6 text-center">
+      <div className="flex justify-center text-muted-foreground mb-2">{icon}</div>
+      <p className="font-medium text-sm">{title}</p>
+      <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">{hint}</p>
+    </div>
+  )
+}
