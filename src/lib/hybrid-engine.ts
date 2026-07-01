@@ -7,7 +7,7 @@ import type { OcrResult, OcrProgress } from './ocr'
  * a vision LLM (accurate for handwriting / messy scans / mixed scripts).
  *
  * The vision LLM path calls a Next.js API route (/api/ocr-vision) that
- * uses z-ai-web-dev-sdk server-side. The browser never sees the API key.
+ * calls the Anthropic Claude API server-side. The browser never sees the API key.
  */
 
 export type EngineId = 'tesseract' | 'vision-ai' | 'auto'
@@ -155,7 +155,7 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 
 /**
  * Call the server-side vision LLM OCR endpoint.
- * The server uses z-ai-web-dev-sdk to call a vision model.
+ * The server uses the Anthropic Claude API to call a vision model.
  */
 export async function runVisionOcr(
   file: File,

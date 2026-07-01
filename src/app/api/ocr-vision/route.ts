@@ -1,36 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server'
-import ZAI from 'z-ai-web-dev-sdk'
+import Anthropic from '@anthropic-ai/sdk'
+import { z } from 'zod'
+import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-type VisionResponse = {
-  text: string
-  blocks?: Array<{
-    text: string
-    confidence: number
-    lines?: Array<{
-      text: string
-      confidence: number
-      words?: Array<{
-        text: string
-        confidence: number
-        bbox: { x0: number; y0: number; x1: number; y1: number }
-      }>
-    }>
-  }>
-  documentType?: string
-  fields?: Record<string, string>
-  confidence?: number
-}
+const client = new Anthropic()
+
+const ALLOWED_MEDIA_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'] as const
+type AllowedMediaType = (typeof ALLOWED_MEDIA_TYPES)[number]
+
+const VisionSchema = z.object({
+  text: z.string(),
+  documentType: z.enum([
+    'receipt',
+    'invoice',
+    'id-card',
+    'form',
+    'table',
+    'handwritten',
+    'book-page',
+    'screenshot',
+    'mixed',
+    'other',
+  ]),
+  fields: z.record(z.string(), z.string()),
+  confidence: z.number(),
+})
 
 /**
  * POST /api/ocr-vision
  * Body: { image: string (data URL), language: string }
  *
- * Calls a vision LLM via z-ai-web-dev-sdk to perform OCR. The LLM is also
- * asked to classify the document type and extract common fields, which the
- * client uses for structured output.
+ * Calls Claude's vision API to perform OCR. The model is also asked to
+ * classify the document type and extract common fields, which the client
+ * uses for structured output.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -39,17 +44,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing image' }, { status: 400 })
     }
 
-    const zai = await ZAI.create()
+    const match = body.image.match(/^data:([^;]+);base64,(.+)$/)
+    if (!match || !ALLOWED_MEDIA_TYPES.includes(match[1] as AllowedMediaType)) {
+      return NextResponse.json(
+        { error: 'Image must be a base64 data URL (jpeg, png, gif, or webp)' },
+        { status: 400 },
+      )
+    }
+    const mediaType = match[1] as AllowedMediaType
+    const base64Data = match[2]
 
     const prompt = `You are Nerita, an OCR engine. Analyze this image and extract ALL text faithfully, preserving line breaks and layout.
-
-Respond as STRICT JSON with this exact schema:
-{
-  "text": "the full extracted text, preserving line breaks",
-  "documentType": "one of: receipt | invoice | id-card | form | table | handwritten | book-page | screenshot | mixed | other",
-  "fields": { "fieldKey": "value" },
-  "confidence": 0.0 to 1.0
-}
 
 Rules:
 - "text" must contain every visible word, number, and symbol, in reading order.
@@ -61,44 +66,27 @@ Rules:
   - id-card: { name, idNumber, dateOfBirth, expiry, issuer, documentType }
   - form: { each labeled field }
   - other: {} or any obvious key-value pairs
-- "confidence" reflects how clearly the text was readable (0.95 for clean print, 0.5 for messy handwriting).
-- Output ONLY the JSON object, no markdown fences, no commentary.`
+- "confidence" reflects how clearly the text was readable (0.95 for clean print, 0.5 for messy handwriting).`
 
-    const response = await zai.chat.completions.createVision({
+    const response = await client.messages.parse({
+      model: 'claude-opus-4-7',
+      max_tokens: 8000,
       messages: [
         {
           role: 'user',
           content: [
             { type: 'text', text: prompt },
-            { type: 'image_url', image_url: { url: body.image } },
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } },
           ],
         },
       ],
-      thinking: { type: 'disabled' },
-      temperature: 0.1,
+      output_config: { format: zodOutputFormat(VisionSchema, 'nerita_ocr') },
     })
 
-    const raw = response.choices[0]?.message?.content ?? ''
-
-    // Strip markdown fences if present
-    const cleaned = raw
-      .replace(/^```(?:json)?\s*/i, '')
-      .replace(/\s*```\s*$/i, '')
-      .trim()
-
-    let parsed: VisionResponse
-    try {
-      parsed = JSON.parse(cleaned)
-    } catch {
-      // If JSON parse fails, fall back to treating the whole response as text
-      parsed = { text: raw, confidence: 0.7, documentType: 'other', fields: {} }
+    const parsed = response.parsed_output
+    if (!parsed) {
+      return NextResponse.json({ error: 'Vision model returned unparsable output' }, { status: 502 })
     }
-
-    // Ensure required fields exist
-    if (!parsed.text) parsed.text = ''
-    if (typeof parsed.confidence !== 'number') parsed.confidence = 0.8
-    if (!parsed.documentType) parsed.documentType = 'other'
-    if (!parsed.fields) parsed.fields = {}
 
     return NextResponse.json(parsed)
   } catch (err) {
