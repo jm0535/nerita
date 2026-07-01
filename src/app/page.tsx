@@ -10,6 +10,8 @@ import {
   Moon,
   Sun,
   Shell,
+  PanelLeft,
+  PanelRight,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
@@ -56,6 +58,8 @@ export default function Home() {
   const [vectorLayer, setVectorLayer] = useState<VectorLayer | null>(null)
   const [vectorizing, setVectorizing] = useState(false)
   const [vectorStatus, setVectorStatus] = useState<string>('')
+  const [leftCollapsed, setLeftCollapsed] = useState(false)
+  const [rightCollapsed, setRightCollapsed] = useState(false)
 
   const addFiles = useCallback((incoming: File[]) => {
     const newOnes: UploadedFile[] = incoming.map((file) => ({
@@ -261,16 +265,28 @@ export default function Home() {
     <div className="bg-background min-h-screen flex flex-col">
       {/* Header — flat Airtable-style top bar */}
       <header className="border-b border-border bg-card sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
-              <Shell className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <h1 className="text-sm font-semibold leading-none">Nerita</h1>
-              <span className="text-[11px] text-muted-foreground leading-none hidden sm:inline">
-                OCR · Vector · Document AI
-              </span>
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setLeftCollapsed((v) => !v)}
+              aria-label="Toggle left sidebar"
+              title={leftCollapsed ? 'Show left panel' : 'Hide left panel'}
+            >
+              <PanelLeft className="w-4 h-4" />
+            </Button>
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
+                <Shell className="w-4 h-4 text-primary-foreground" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <h1 className="text-sm font-semibold leading-none">Nerita</h1>
+                <span className="text-[11px] text-muted-foreground leading-none hidden md:inline">
+                  OCR · Vector · Document AI
+                </span>
+              </div>
             </div>
           </div>
 
@@ -303,13 +319,23 @@ export default function Home() {
                 <span className="hidden sm:inline">Tesseract.js</span>
               </a>
             </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setRightCollapsed((v) => !v)}
+              aria-label="Toggle right sidebar"
+              title={rightCollapsed ? 'Show right panel' : 'Hide right panel'}
+            >
+              <PanelRight className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       </header>
 
       {/* Hero strip — flat, no gradient */}
       <section className="border-b border-border bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
           <div className="flex items-start justify-between flex-wrap gap-6">
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-1.5 text-[11px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded mb-3">
@@ -334,42 +360,48 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Main */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* Left column: upload + engine + settings */}
-          <div className="lg:col-span-4 space-y-5">
-            <Card>
-              <CardContent className="pt-5">
-                <OcrUploader
-                  files={files}
-                  onAdd={addFiles}
-                  onRemove={removeFile}
-                  onClear={clearAll}
-                />
-              </CardContent>
-            </Card>
-            <EngineSelector
-              enginePref={enginePref}
-              onChange={setEnginePref}
-              analysis={activeItem ? analyses[activeItem.file.id] : null}
-              routingReason={activeItem ? routingReasons[activeItem.file.id] : undefined}
-              disabled={running}
-            />
-            <DrawingModePanel
-              enabled={drawingMode}
-              onChange={setDrawingMode}
-              onVectorize={handleVectorize}
-              vectorLayer={vectorLayer}
-              vectorizing={vectorizing}
-              vectorStatus={vectorStatus}
-              disabled={running || !activeItem}
-            />
-            <SettingsPanel settings={settings} onChange={setSettings} disabled={running} />
-          </div>
+      {/* Main — 3-column flex with collapsible sidebars */}
+      <main className="flex-1 w-full">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 flex gap-5">
+          {/* Left sidebar (collapsible) */}
+          <aside
+            className={`${
+              leftCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'w-[340px] opacity-100'
+            } shrink-0 transition-all duration-200 hidden lg:block`}
+          >
+            <div className="space-y-4 sticky top-[4.5rem] max-h-[calc(100vh-5rem)] overflow-y-auto pr-1 pb-4">
+              <Card>
+                <CardContent className="pt-5">
+                  <OcrUploader
+                    files={files}
+                    onAdd={addFiles}
+                    onRemove={removeFile}
+                    onClear={clearAll}
+                  />
+                </CardContent>
+              </Card>
+              <EngineSelector
+                enginePref={enginePref}
+                onChange={setEnginePref}
+                analysis={activeItem ? analyses[activeItem.file.id] : null}
+                routingReason={activeItem ? routingReasons[activeItem.file.id] : undefined}
+                disabled={running}
+              />
+              <DrawingModePanel
+                enabled={drawingMode}
+                onChange={setDrawingMode}
+                onVectorize={handleVectorize}
+                vectorLayer={vectorLayer}
+                vectorizing={vectorizing}
+                vectorStatus={vectorStatus}
+                disabled={running || !activeItem}
+              />
+              <SettingsPanel settings={settings} onChange={setSettings} disabled={running} />
+            </div>
+          </aside>
 
-          {/* Middle column: queue + result */}
-          <div className="lg:col-span-5 space-y-5">
+          {/* Middle column — always visible */}
+          <div className="flex-1 min-w-0 space-y-4">
             <ProcessingPanel
               items={items}
               setItems={setItems}
@@ -388,64 +420,109 @@ export default function Home() {
             />
           </div>
 
-          {/* Right column: export + history + stats */}
-          <div className="lg:col-span-3 space-y-5">
-            <ExportPanel
-              result={activeItem?.result ?? null}
-              fileName={activeItem?.file.file.name ?? 'nerita-result'}
-              imageFile={activeItem?.file.file}
-              vectorLayer={drawingMode ? vectorLayer : null}
-              disabled={running}
-            />
-            <HistoryPanel onSelect={handleHistorySelect} refreshKey={historyRefreshKey} />
+          {/* Right sidebar (collapsible) */}
+          <aside
+            className={`${
+              rightCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'w-[300px] opacity-100'
+            } shrink-0 transition-all duration-200 hidden lg:block`}
+          >
+            <div className="space-y-4 sticky top-[4.5rem] max-h-[calc(100vh-5rem)] overflow-y-auto pr-1 pb-4">
+              <ExportPanel
+                result={activeItem?.result ?? null}
+                fileName={activeItem?.file.file.name ?? 'nerita-result'}
+                imageFile={activeItem?.file.file}
+                vectorLayer={drawingMode ? vectorLayer : null}
+                disabled={running}
+              />
+              <HistoryPanel onSelect={handleHistorySelect} refreshKey={historyRefreshKey} />
 
-            <Card>
-              <CardContent className="pt-5 space-y-3">
-                <h3 className="text-sm font-semibold">Session stats</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  <Stat label="Files" value={items.length} />
-                  <Stat label="Processed" value={doneCount} accent />
-                  <Stat
-                    label="Words"
-                    value={items
-                      .filter((i) => i.result)
-                      .reduce((s, i) => s + (i.result?.words.length ?? 0), 0)}
-                  />
-                  <Stat
-                    label="Avg conf"
-                    value={
-                      items.filter((i) => i.result).length
-                        ? `${(
-                            items
-                              .filter((i) => i.result)
-                              .reduce((s, i) => s + (i.result?.confidence ?? 0), 0) /
-                            items.filter((i) => i.result).length
-                          ).toFixed(1)}%`
-                        : '—'
-                    }
-                  />
-                </div>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardContent className="pt-5 space-y-3">
+                  <h3 className="text-sm font-semibold">Session stats</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Stat label="Files" value={items.length} />
+                    <Stat label="Processed" value={doneCount} accent />
+                    <Stat
+                      label="Words"
+                      value={items
+                        .filter((i) => i.result)
+                        .reduce((s, i) => s + (i.result?.words.length ?? 0), 0)}
+                    />
+                    <Stat
+                      label="Avg conf"
+                      value={
+                        items.filter((i) => i.result).length
+                          ? `${(
+                              items
+                                .filter((i) => i.result)
+                                .reduce((s, i) => s + (i.result?.confidence ?? 0), 0) /
+                              items.filter((i) => i.result).length
+                            ).toFixed(1)}%`
+                          : '—'
+                      }
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
-            <Card className="bg-primary/5 border-primary/20">
-              <CardContent className="pt-5">
-                <h3 className="text-sm font-semibold mb-2">How Nerita grazes</h3>
-                <ol className="text-xs text-muted-foreground space-y-1.5 list-decimal list-inside">
-                  <li>Upload one or more scanned images</li>
-                  <li>Pick an engine (or let Auto decide)</li>
-                  <li>Click <strong className="text-foreground">Run OCR</strong> — Nerita clings to each image</li>
-                  <li>Preview text, fields, tables & vectors</li>
-                  <li>Export to any of 14 formats (or all at once)</li>
-                </ol>
-              </CardContent>
-            </Card>
-          </div>
+              <Card className="bg-primary/5 border-primary/20">
+                <CardContent className="pt-5">
+                  <h3 className="text-sm font-semibold mb-2">How Nerita grazes</h3>
+                  <ol className="text-xs text-muted-foreground space-y-1.5 list-decimal list-inside">
+                    <li>Upload one or more scanned images</li>
+                    <li>Pick an engine (or let Auto decide)</li>
+                    <li>Click <strong className="text-foreground">Run OCR</strong> — Nerita clings to each image</li>
+                    <li>Preview text, fields, tables & vectors</li>
+                    <li>Export to any of 14 formats (or all at once)</li>
+                  </ol>
+                </CardContent>
+              </Card>
+            </div>
+          </aside>
+        </div>
+
+        {/* Mobile fallback: stacked layout (single column) */}
+        <div className="lg:hidden max-w-[1600px] mx-auto px-4 sm:px-6 pb-6 space-y-4">
+          <Card>
+            <CardContent className="pt-5">
+              <OcrUploader
+                files={files}
+                onAdd={addFiles}
+                onRemove={removeFile}
+                onClear={clearAll}
+              />
+            </CardContent>
+          </Card>
+          <EngineSelector
+            enginePref={enginePref}
+            onChange={setEnginePref}
+            analysis={activeItem ? analyses[activeItem.file.id] : null}
+            routingReason={activeItem ? routingReasons[activeItem.file.id] : undefined}
+            disabled={running}
+          />
+          <DrawingModePanel
+            enabled={drawingMode}
+            onChange={setDrawingMode}
+            onVectorize={handleVectorize}
+            vectorLayer={vectorLayer}
+            vectorizing={vectorizing}
+            vectorStatus={vectorStatus}
+            disabled={running || !activeItem}
+          />
+          <SettingsPanel settings={settings} onChange={setSettings} disabled={running} />
+          <ExportPanel
+            result={activeItem?.result ?? null}
+            fileName={activeItem?.file.file.name ?? 'nerita-result'}
+            imageFile={activeItem?.file.file}
+            vectorLayer={drawingMode ? vectorLayer : null}
+            disabled={running}
+          />
+          <HistoryPanel onSelect={handleHistorySelect} refreshKey={historyRefreshKey} />
         </div>
       </main>
 
-      <footer className="border-t border-border bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-muted-foreground">
+      <footer className="border-t border-border bg-card mt-auto">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-muted-foreground">
           <p>
             <span className="text-primary font-semibold">Nerita</span> · Tesseract.js + Vision AI + OpenCV.js · Next.js · shadcn/ui
           </p>
