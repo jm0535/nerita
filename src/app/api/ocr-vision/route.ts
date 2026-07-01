@@ -80,7 +80,7 @@ Rules:
           ],
         },
       ],
-      output_config: { format: zodOutputFormat(VisionSchema, 'nerita_ocr') },
+      output_config: { format: zodOutputFormat(VisionSchema) },
     })
 
     const parsed = response.parsed_output
