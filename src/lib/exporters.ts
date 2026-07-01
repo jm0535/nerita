@@ -600,8 +600,9 @@ async function exportSearchablePdf(
     return exportPdf(result, fileName)
   }
 
-  const imageDataUrl = await fileToDataUrl(imageFile)
-  const img = await loadImageDimensions(imageDataUrl)
+  const rawImageDataUrl = await fileToDataUrl(imageFile)
+  const img = await loadImageDimensions(rawImageDataUrl)
+  const { dataUrl: imageDataUrl, format: imageFormat } = await toPdfImage(rawImageDataUrl)
 
   // Use image's pixel dimensions to size the PDF page (in pt at 72dpi).
   // Cap page size to A4 portrait (595x842 pt) — scale down if larger.
@@ -620,7 +621,7 @@ async function exportSearchablePdf(
   })
 
   // Add the image as the visible background (full page).
-  pdf.addImage(imageDataUrl, 'JPEG', 0, 0, pageW, pageH, undefined, 'FAST')
+  pdf.addImage(imageDataUrl, imageFormat, 0, 0, pageW, pageH, undefined, 'FAST')
 
   // Now lay the text over it invisibly. We use the line positions from
   // the OCR result if bboxes are available; otherwise distribute lines
@@ -668,6 +669,40 @@ function loadImageDimensions(src: string): Promise<{ width: number; height: numb
     img.onerror = (e) => reject(e)
     img.src = src
   })
+}
+
+// jsPDF's addImage only understands these formats natively.
+const PDF_SUPPORTED_FORMATS: Record<string, 'JPEG' | 'PNG' | 'WEBP'> = {
+  'image/jpeg': 'JPEG',
+  'image/jpg': 'JPEG',
+  'image/png': 'PNG',
+  'image/webp': 'WEBP',
+}
+
+/**
+ * Ensure an image data URL is in a format jsPDF's addImage supports.
+ * Uploads accept any image/* mime type, but addImage() silently produces a
+ * corrupt page if told the wrong format — so anything outside the
+ * supported set (GIF, BMP, SVG, ...) gets re-encoded as PNG via canvas.
+ */
+async function toPdfImage(dataUrl: string): Promise<{ dataUrl: string; format: 'JPEG' | 'PNG' | 'WEBP' }> {
+  const mime = dataUrl.match(/^data:([^;]+);/)?.[1]?.toLowerCase()
+  const format = mime ? PDF_SUPPORTED_FORMATS[mime] : undefined
+  if (format) return { dataUrl, format }
+
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const el = new Image()
+    el.onload = () => resolve(el)
+    el.onerror = (e) => reject(e)
+    el.src = dataUrl
+  })
+  const canvas = document.createElement('canvas')
+  canvas.width = img.naturalWidth
+  canvas.height = img.naturalHeight
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('Canvas 2D context unavailable')
+  ctx.drawImage(img, 0, 0)
+  return { dataUrl: canvas.toDataURL('image/png'), format: 'PNG' }
 }
 
 // ============================================================================
