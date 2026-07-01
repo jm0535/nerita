@@ -36,15 +36,15 @@ export function DocumentInfoPanel({ result }: Props) {
   if (docType === 'unknown' && fieldEntries.length === 0) return null
 
   return (
-    <Card className="bg-teal-50/40 dark:bg-teal-950/15 border-teal-200 dark:border-teal-900">
+    <Card className="bg-primary/5 border-primary/20">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-sm">
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
             <Tag className={`w-4 h-4 ${meta.color}`} />
             Document Intelligence
           </CardTitle>
           {docType !== 'unknown' && (
-            <Badge variant="secondary" className={`text-[10px] gap-1 ${meta.color}`}>
+            <Badge variant="outline" className={`text-[10px] gap-1 ${meta.color} font-medium`}>
               {meta.icon}
               {meta.label}
             </Badge>
@@ -69,7 +69,7 @@ export function DocumentInfoPanel({ result }: Props) {
           </dl>
         )}
         {result.engine && (
-          <p className="text-[10px] text-muted-foreground mt-2 pt-2 border-t border-teal-200 dark:border-teal-900">
+          <p className="text-[10px] text-muted-foreground mt-2 pt-2 border-t border-border">
             Extracted by <span className="font-medium">{result.engine === 'vision-ai' ? 'Vision AI' : 'Tesseract.js'}</span>
           </p>
         )}

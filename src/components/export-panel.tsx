@@ -49,19 +49,19 @@ export function ExportPanel({ result, fileName, imageFile, vectorLayer, disabled
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <FileDown className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+            <FileDown className="w-4 h-4 text-primary" />
             Export
           </CardTitle>
           {result && (
-            <Badge variant="secondary" className="text-[10px]">
+            <Badge variant="secondary" className="text-[10px] font-medium">
               {EXPORT_FORMATS.length} formats
             </Badge>
           )}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
           {EXPORT_FORMATS.map((f) => {
             const isBusy = busy === f.id
             const isDrawing = DRAWING_FORMATS.includes(f.id)
@@ -75,28 +75,28 @@ export function ExportPanel({ result, fileName, imageFile, vectorLayer, disabled
                       size="sm"
                       disabled={disabled || !result || busy !== null || drawingDisabled}
                       onClick={() => handleExport(f.id)}
-                      className={`h-auto py-2 px-2 flex flex-col items-start gap-0.5 justify-start text-left ${
-                        isDrawing && vectorLayer ? 'border-amber-300 bg-amber-50/50 dark:bg-amber-950/20' : ''
+                      className={`h-auto py-1.5 px-2 flex flex-col items-start gap-0.5 justify-start text-left rounded-md ${
+                        isDrawing && vectorLayer ? 'border-amber-400 bg-amber-50/60 dark:bg-amber-950/20' : ''
                       }`}
                     >
                       <span className="flex items-center gap-1.5 w-full">
                         {isBusy ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin text-teal-600" />
+                          <Loader2 className="w-3 h-3 animate-spin text-primary" />
                         ) : (
-                          <Download className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                          <Download className="w-3 h-3 text-muted-foreground" />
                         )}
-                        <span className="text-[10px] font-semibold uppercase">{f.ext}</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wide">{f.ext}</span>
                         {isDrawing && vectorLayer && (
-                          <span className="ml-auto text-[8px] bg-amber-200 dark:bg-amber-900 text-amber-800 dark:text-amber-200 px-1 rounded">VEC</span>
+                          <span className="ml-auto text-[8px] bg-amber-200 dark:bg-amber-900 text-amber-800 dark:text-amber-200 px-1 rounded font-medium">VEC</span>
                         )}
                       </span>
-                      <span className="text-[10px] text-muted-foreground leading-tight line-clamp-2">
+                      <span className="text-[9px] text-muted-foreground leading-tight line-clamp-2">
                         {f.label}
                       </span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-[240px]">
-                    <p className="font-semibold">{f.label}</p>
+                    <p className="font-semibold text-xs">{f.label}</p>
                     <p className="text-xs text-muted-foreground">{f.description}</p>
                     {isDrawing && !vectorLayer && (
                       <p className="text-[10px] text-amber-700 dark:text-amber-400 mt-1">
@@ -113,14 +113,14 @@ export function ExportPanel({ result, fileName, imageFile, vectorLayer, disabled
         <Button
           variant="default"
           size="sm"
-          className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-md"
           disabled={disabled || !result || busy !== null}
           onClick={handleAll}
         >
           {busy === 'all' ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
           ) : (
-            <Layers className="w-4 h-4 mr-2" />
+            <Layers className="w-3.5 h-3.5 mr-1.5" />
           )}
           Download all {EXPORT_FORMATS.length} formats
         </Button>

@@ -57,11 +57,11 @@ export function HistoryPanel({ onSelect, refreshKey }: Props) {
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <History className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+            <History className="w-4 h-4 text-primary" />
             The Trail
             {items.length > 0 && (
-              <Badge variant="secondary" className="text-[10px]">{items.length}</Badge>
+              <Badge variant="secondary" className="text-[10px] font-medium">{items.length}</Badge>
             )}
           </CardTitle>
           {items.length > 0 && (
@@ -122,17 +122,17 @@ export function HistoryPanel({ onSelect, refreshKey }: Props) {
               {filtered.map((item) => (
                 <div
                   key={item.id}
-                  className="group flex items-center gap-2 p-2 rounded-md border bg-card hover:bg-accent/40 transition cursor-pointer"
+                  className="group flex items-center gap-2 p-2 rounded-md border border-border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
                   onClick={() => onSelect(item)}
                 >
                   {item.thumbnail ? (
                     <img
                       src={item.thumbnail}
                       alt={item.fileName}
-                      className="w-10 h-10 rounded object-cover border shrink-0"
+                      className="w-10 h-10 rounded-md object-cover border border-border shrink-0"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded border bg-muted flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-md border border-border bg-muted flex items-center justify-center shrink-0">
                       <History className="w-4 h-4 text-muted-foreground" />
                     </div>
                   )}
@@ -140,7 +140,7 @@ export function HistoryPanel({ onSelect, refreshKey }: Props) {
                     <p className="text-xs truncate font-medium">{item.fileName}</p>
                     <p className="text-[10px] text-muted-foreground truncate">
                       {item.documentType !== 'unknown' && (
-                        <span className="text-teal-600 dark:text-teal-400 capitalize">{item.documentType} · </span>
+                        <span className="text-primary capitalize">{item.documentType} · </span>
                       )}
                       {item.text.slice(0, 50).trim() || '(no text)'}
                     </p>

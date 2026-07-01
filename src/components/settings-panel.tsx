@@ -30,14 +30,14 @@ export function SettingsPanel({ settings, onChange, disabled }: Props) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Settings2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+        <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+          <Settings2 className="w-4 h-4 text-primary" />
           OCR Settings
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-1.5">
-          <Label className="text-xs flex items-center gap-1.5">
+          <Label className="text-xs flex items-center gap-1.5 font-medium">
             <Languages className="w-3.5 h-3.5" />
             Recognition Language
           </Label>
@@ -46,7 +46,7 @@ export function SettingsPanel({ settings, onChange, disabled }: Props) {
             onValueChange={(v) => onChange({ ...settings, language: v })}
             disabled={disabled}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full h-9">
               <SelectValue placeholder="Select language" />
             </SelectTrigger>
             <SelectContent>
@@ -111,7 +111,7 @@ function ToggleRow({
   return (
     <div className="flex items-start justify-between gap-3 py-1">
       <div className="flex-1 min-w-0">
-        <Label className="text-xs flex items-center gap-1.5">{icon}{label}</Label>
+        <Label className="text-xs flex items-center gap-1.5 font-medium">{icon}{label}</Label>
         <p className="text-[10px] text-muted-foreground mt-0.5">{description}</p>
       </div>
       <Switch checked={checked} disabled={disabled} onCheckedChange={onCheckedChange} />

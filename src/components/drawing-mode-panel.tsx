@@ -28,10 +28,10 @@ export function DrawingModePanel({
   disabled,
 }: Props) {
   return (
-    <Card className={enabled ? 'border-amber-300 dark:border-amber-700' : ''}>
+    <Card className={enabled ? 'border-amber-400 dark:border-amber-600' : ''}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
             <PencilRuler className={`w-4 h-4 ${enabled ? 'text-amber-600' : 'text-muted-foreground'}`} />
             Drawing Mode
           </CardTitle>
@@ -47,7 +47,7 @@ export function DrawingModePanel({
         <p className="text-[11px] text-muted-foreground leading-relaxed">
           {enabled
             ? 'Nerita will vectorize line drawings, plans, and schematics into editable geometry — lines, circles, polygons. Export to SVG, DXF (AutoCAD), or SHP (GIS).'
-            : 'Enable to extract vector geometry from drawings, sketches, and architectural plans. Best for clean line art — pencils sketches may be noisier.'}
+            : 'Enable to extract vector geometry from drawings, sketches, and architectural plans. Best for clean line art — pencil sketches may be noisier.'}
         </p>
 
         {enabled && (
@@ -57,12 +57,12 @@ export function DrawingModePanel({
               variant="outline"
               onClick={onVectorize}
               disabled={disabled || vectorizing}
-              className="w-full border-amber-400 text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30"
+              className="w-full border-amber-400 text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30 rounded-md h-8"
             >
               {vectorizing ? (
-                <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
               ) : (
-                <Sparkles className="w-3.5 h-3.5 mr-2" />
+                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
               )}
               {vectorizing ? (vectorStatus ?? 'Vectorizing…') : 'Vectorize drawing'}
             </Button>
@@ -77,10 +77,10 @@ export function DrawingModePanel({
 
             {vectorLayer && vectorLayer.totalPrimitives > 0 && (
               <div className="flex items-center gap-1.5 pt-1">
-                <Badge variant="secondary" className="text-[9px] bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300">
-                  {vectorLayer.totalPrimitives} primitives detected
+                <Badge variant="secondary" className="text-[9px] bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 font-medium">
+                  {vectorLayer.totalPrimitives} primitives
                 </Badge>
-                <Badge variant="outline" className="text-[9px]">
+                <Badge variant="outline" className="text-[9px] font-medium">
                   {vectorLayer.width}×{vectorLayer.height}px
                 </Badge>
               </div>
@@ -94,9 +94,9 @@ export function DrawingModePanel({
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-md border bg-card p-1.5 text-center">
-      <p className="text-[9px] text-muted-foreground">{label}</p>
-      <p className="text-sm font-bold text-amber-700 dark:text-amber-400">{value}</p>
+    <div className="rounded-md border border-border bg-background p-1.5 text-center">
+      <p className="text-[9px] text-muted-foreground uppercase tracking-wide font-medium">{label}</p>
+      <p className="text-sm font-semibold text-amber-700 dark:text-amber-400 mt-0.5">{value}</p>
     </div>
   )
 }

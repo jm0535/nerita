@@ -68,17 +68,17 @@ export function ResultViewer({ result, fileName, vectorLayer, imagePreview }: Pr
             {result.engine && (
               <Badge
                 variant="outline"
-                className={`text-[10px] gap-1 ${
+                className={`text-[10px] gap-1 font-medium ${
                   result.engine === 'vision-ai'
-                    ? 'border-violet-300 text-violet-700 dark:border-violet-800 dark:text-violet-400'
-                    : 'border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-400'
+                    ? 'border-violet-300 text-violet-700 dark:border-violet-700 dark:text-violet-400'
+                    : 'border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-400'
                 }`}
               >
                 {result.engine === 'vision-ai' ? '🧠 Vision AI' : '⚡ Tesseract'}
               </Badge>
             )}
             {result.documentType && result.documentType !== 'unknown' && (
-              <Badge variant="outline" className="text-[10px] capitalize border-teal-300 text-teal-700 dark:border-teal-800 dark:text-teal-400">
+              <Badge variant="outline" className="text-[10px] capitalize border-primary/30 text-primary font-medium">
                 {result.documentType}
               </Badge>
             )}
@@ -144,7 +144,7 @@ export function ResultViewer({ result, fileName, vectorLayer, imagePreview }: Pr
           </TabsList>
 
           <TabsContent value="text" className="mt-3">
-            <ScrollArea className="h-[460px] w-full rounded-md border bg-zinc-50 dark:bg-zinc-950 p-4">
+            <ScrollArea className="h-[460px] w-full rounded-md border border-border bg-background p-4">
               <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">
                 {result.text || '(no text extracted)'}
               </pre>
@@ -164,7 +164,7 @@ export function ResultViewer({ result, fileName, vectorLayer, imagePreview }: Pr
             ) : (
               <div className="rounded-md border overflow-hidden">
                 <table className="w-full text-xs">
-                  <thead className="bg-zinc-100 dark:bg-zinc-900">
+                  <thead className="bg-muted">
                     <tr>
                       <th className="px-3 py-1.5 text-left font-semibold w-1/3">Field</th>
                       <th className="px-3 py-1.5 text-left font-semibold">Value</th>
@@ -198,12 +198,12 @@ export function ResultViewer({ result, fileName, vectorLayer, imagePreview }: Pr
               <div className="space-y-4">
                 {tables.map((t, idx) => (
                   <div key={idx} className="rounded-md border overflow-hidden">
-                    <div className="bg-teal-600/10 px-3 py-1.5 text-xs font-medium">
+                    <div className="bg-primary/10 px-3 py-1.5 text-xs font-medium">
                       Table {idx + 1} · {t.rows.length} rows × {t.headers.length} cols
                     </div>
                     <div className="overflow-x-auto">
                       <table className="w-full text-xs">
-                        <thead className="bg-zinc-100 dark:bg-zinc-900">
+                        <thead className="bg-muted">
                           <tr>
                             {t.headers.map((h, i) => (
                               <th key={i} className="px-2 py-1.5 text-left font-semibold border-b">
@@ -241,7 +241,7 @@ export function ResultViewer({ result, fileName, vectorLayer, imagePreview }: Pr
             ) : (
               <div className="rounded-md border overflow-hidden">
                 <table className="w-full text-xs">
-                  <thead className="bg-zinc-100 dark:bg-zinc-900">
+                  <thead className="bg-muted">
                     <tr>
                       <th className="px-2 py-1.5 text-left">#</th>
                       <th className="px-2 py-1.5 text-left">Latitude</th>
@@ -318,8 +318,8 @@ export function ResultViewer({ result, fileName, vectorLayer, imagePreview }: Pr
           </TabsContent>
 
           <TabsContent value="structure" className="mt-3">
-            <ScrollArea className="h-[460px] w-full rounded-md border bg-zinc-950 p-4">
-              <pre className="text-xs text-teal-300 font-mono whitespace-pre-wrap">
+            <ScrollArea className="h-[460px] w-full rounded-md border bg-foreground p-4">
+              <pre className="text-xs text-background font-mono whitespace-pre-wrap">
                 {xmlPreview}
               </pre>
             </ScrollArea>

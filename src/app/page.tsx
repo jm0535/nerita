@@ -259,39 +259,39 @@ export default function Home() {
 
   return (
     <div className="bg-background min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+      {/* Header — flat Airtable-style top bar */}
+      <header className="border-b border-border bg-card sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-700 flex items-center justify-center shadow-sm">
-              <Shell className="w-5 h-5 text-white" />
+            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
+              <Shell className="w-4 h-4 text-primary-foreground" />
             </div>
-            <div>
-              <h1 className="text-base font-bold leading-tight">Nerita</h1>
-              <p className="text-[10px] text-muted-foreground leading-tight">
-                Clings to every pixel, grazes every word
-              </p>
+            <div className="flex items-baseline gap-2">
+              <h1 className="text-sm font-semibold leading-none">Nerita</h1>
+              <span className="text-[11px] text-muted-foreground leading-none hidden sm:inline">
+                OCR · Vector · Document AI
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs gap-1.5"
+              className="h-8 px-2.5 text-xs gap-1.5 font-medium"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               aria-label="Toggle theme"
               suppressHydrationWarning
             >
-              <Sun className="w-4 h-4 hidden dark:block" />
-              <Moon className="w-4 h-4 block dark:hidden" />
+              <Sun className="w-3.5 h-3.5 hidden dark:block" />
+              <Moon className="w-3.5 h-3.5 block dark:hidden" />
               <span className="hidden sm:inline dark:hidden">Dark</span>
               <span className="hidden sm:inline dark:inline">Light</span>
             </Button>
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="text-xs gap-1.5"
+              className="h-8 px-2.5 text-xs gap-1.5 font-medium"
               asChild
             >
               <a
@@ -307,29 +307,28 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero strip */}
-      <section className="border-b bg-gradient-to-b from-teal-50/60 to-background dark:from-teal-950/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-          <div className="flex items-start justify-between flex-wrap gap-4">
+      {/* Hero strip — flat, no gradient */}
+      <section className="border-b border-border bg-card">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+          <div className="flex items-start justify-between flex-wrap gap-6">
             <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-1.5 text-[11px] font-medium text-teal-700 dark:text-teal-400 bg-teal-100 dark:bg-teal-950/40 px-2 py-0.5 rounded-full mb-2">
+              <div className="inline-flex items-center gap-1.5 text-[11px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded mb-3">
                 <Sparkles className="w-3 h-3" />
                 Hybrid engine · 100% private · Open-source
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                The mangrove snail of OCR —{' '}
-                <span className="text-teal-600 dark:text-teal-400">methodical, resilient, thorough</span>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight">
+                The mangrove snail of OCR
               </h2>
-              <p className="text-sm text-muted-foreground mt-1.5">
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
                 Nerita routes each image to the right engine (offline Tesseract.js or cloud Vision AI),
-                detects document type & fields, builds a searchable PDF, and remembers everything in your local trail.
-                Export to PDF, DOCX, Markdown, TXT, CSV, HTML, XLSX, XML, GeoJSON & JSON.
+                detects document type & fields, builds searchable PDFs, vectorizes drawings to DXF/SHP,
+                and remembers everything in your local trail.
               </p>
             </div>
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <FeaturePill icon={<ShieldCheck className="w-4 h-4" />} label="Private" />
-              <FeaturePill icon={<Zap className="w-4 h-4" />} label="Hybrid" />
-              <FeaturePill icon={<FileStack className="w-4 h-4" />} label="Batch" />
+            <div className="flex items-center gap-1.5">
+              <FeaturePill icon={<ShieldCheck className="w-3.5 h-3.5" />} label="Private" color="text-emerald-600" />
+              <FeaturePill icon={<Zap className="w-3.5 h-3.5" />} label="Hybrid" color="text-amber-600" />
+              <FeaturePill icon={<FileStack className="w-3.5 h-3.5" />} label="Batch" color="text-violet-600" />
             </div>
           </div>
         </div>
@@ -429,15 +428,15 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            <Card className="bg-teal-50/50 dark:bg-teal-950/20 border-teal-200 dark:border-teal-900">
+            <Card className="bg-primary/5 border-primary/20">
               <CardContent className="pt-5">
-                <h3 className="text-sm font-semibold mb-1.5">How Nerita grazes</h3>
-                <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+                <h3 className="text-sm font-semibold mb-2">How Nerita grazes</h3>
+                <ol className="text-xs text-muted-foreground space-y-1.5 list-decimal list-inside">
                   <li>Upload one or more scanned images</li>
                   <li>Pick an engine (or let Auto decide)</li>
-                  <li>Click <strong>Run OCR</strong> — Nerita clings to each image</li>
-                  <li>Preview text, fields, tables & geo points</li>
-                  <li>Export to any of 11 formats (or all at once)</li>
+                  <li>Click <strong className="text-foreground">Run OCR</strong> — Nerita clings to each image</li>
+                  <li>Preview text, fields, tables & vectors</li>
+                  <li>Export to any of 14 formats (or all at once)</li>
                 </ol>
               </CardContent>
             </Card>
@@ -445,34 +444,34 @@ export default function Home() {
         </div>
       </main>
 
-      <footer className="border-t bg-background py-5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
+      <footer className="border-t border-border bg-card">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-muted-foreground">
           <p>
-            <span className="text-teal-600 dark:text-teal-400 font-medium">Nerita</span> · Built with Tesseract.js + Vision AI · Next.js · shadcn/ui — fully open-source
+            <span className="text-primary font-semibold">Nerita</span> · Tesseract.js + Vision AI + OpenCV.js · Next.js · shadcn/ui
           </p>
-          <p>Images never leave your browser (offline mode) · Local trail stored in IndexedDB</p>
+          <p>Images never leave your browser · Local trail in IndexedDB</p>
         </div>
       </footer>
     </div>
   )
 }
 
-function FeaturePill({ icon, label }: { icon: React.ReactNode; label: string }) {
+function FeaturePill({ icon, label, color }: { icon: React.ReactNode; label: string; color?: string }) {
   return (
-    <div className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg bg-background border">
-      <span className="text-teal-600 dark:text-teal-400">{icon}</span>
-      <span className="text-[10px] font-medium">{label}</span>
+    <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-background border border-border">
+      <span className={color ?? 'text-primary'}>{icon}</span>
+      <span className="text-[11px] font-medium">{label}</span>
     </div>
   )
 }
 
 function Stat({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) {
   return (
-    <div className="rounded-md border bg-card p-2">
-      <p className="text-[10px] text-muted-foreground">{label}</p>
+    <div className="rounded-md border border-border bg-card p-2.5">
+      <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">{label}</p>
       <p
-        className={`text-lg font-bold ${
-          accent ? 'text-teal-600 dark:text-teal-400' : ''
+        className={`text-xl font-semibold mt-0.5 ${
+          accent ? 'text-primary' : ''
         }`}
       >
         {value}

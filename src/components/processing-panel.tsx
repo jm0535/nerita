@@ -52,7 +52,7 @@ export function ProcessingPanel({
                   {items.length} total
                 </Badge>
                 {doneCount > 0 && (
-                  <Badge className="bg-emerald-600 text-white text-[10px]">{doneCount} done</Badge>
+                  <Badge className="bg-primary text-primary-foreground text-[10px]">{doneCount} done</Badge>
                 )}
                 {errorCount > 0 && (
                   <Badge variant="destructive" className="text-[10px]">
@@ -67,7 +67,7 @@ export function ProcessingPanel({
               size="sm"
               onClick={onRunAll}
               disabled={running || items.length === 0}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md h-8"
             >
               {running ? (
                 <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
@@ -76,7 +76,7 @@ export function ProcessingPanel({
               )}
               Run OCR{items.length > 1 ? ` on ${items.length} files` : ''}
             </Button>
-            <Button size="sm" variant="ghost" onClick={onClear} disabled={running || items.length === 0}>
+            <Button size="sm" variant="ghost" onClick={onClear} disabled={running || items.length === 0} className="h-8 w-8 p-0">
               <Trash2 className="w-3.5 h-3.5" />
             </Button>
           </div>
@@ -91,13 +91,12 @@ export function ProcessingPanel({
             {items.map((item) => (
               <div
                 key={item.file.id}
-                className="flex items-center gap-3 p-2 rounded-md border bg-card hover:bg-accent/40 transition"
+                className="flex items-center gap-3 p-2 rounded-md border border-border bg-card hover:bg-accent/50 transition-colors"
               >
-                { }
                 <img
                   src={item.file.preview}
                   alt={item.file.file.name}
-                  className="w-10 h-10 rounded object-cover border"
+                  className="w-10 h-10 rounded-md object-cover border border-border"
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">

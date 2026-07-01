@@ -25,22 +25,22 @@ export function EngineSelector({ enginePref, onChange, analysis, routingReason, 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Cpu className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+        <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+          <Cpu className="w-4 h-4 text-primary" />
           OCR Engine
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="space-y-1.5">
-          <Label className="text-xs">Recognition engine</Label>
+          <Label className="text-xs font-medium">Recognition engine</Label>
           <Select value={enginePref} onValueChange={(v) => onChange(v as EngineId)} disabled={disabled}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full h-9">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="auto">
                 <span className="flex items-center gap-2">
-                  <Shuffle className="w-3.5 h-3.5 text-teal-600" />
+                  <Shuffle className="w-3.5 h-3.5 text-primary" />
                   Auto (smart router)
                 </span>
               </SelectItem>
@@ -61,15 +61,15 @@ export function EngineSelector({ enginePref, onChange, analysis, routingReason, 
         </div>
 
         {routingReason && (
-          <div className="rounded-md bg-teal-50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-900 p-2.5">
-            <p className="text-[11px] text-teal-800 dark:text-teal-300 leading-relaxed">
+          <div className="rounded-md bg-primary/5 border border-primary/20 p-2.5">
+            <p className="text-[11px] text-foreground/80 leading-relaxed">
               {routingReason}
             </p>
           </div>
         )}
 
         {analysis && (
-          <div className="grid grid-cols-2 gap-2 pt-1">
+          <div className="grid grid-cols-2 gap-1.5 pt-1">
             <Stat label="Sharpness" value={`${(analysis.sharpness * 100).toFixed(0)}%`} />
             <Stat label="Contrast" value={`${(analysis.contrast * 100).toFixed(0)}%`} />
             <Stat label="Messiness" value={`${(analysis.messiness * 100).toFixed(0)}%`} />
@@ -77,14 +77,14 @@ export function EngineSelector({ enginePref, onChange, analysis, routingReason, 
           </div>
         )}
 
-        <div className="flex items-start gap-2 pt-1">
-          <Badge variant="outline" className="text-[9px] gap-1">
+        <div className="flex items-start gap-1 pt-1">
+          <Badge variant="outline" className="text-[9px] gap-1 font-medium">
             <Zap className="w-2.5 h-2.5" /> Fast
           </Badge>
-          <Badge variant="outline" className="text-[9px] gap-1">
+          <Badge variant="outline" className="text-[9px] gap-1 font-medium">
             <Brain className="w-2.5 h-2.5" /> Accurate
           </Badge>
-          <Badge variant="outline" className="text-[9px]">
+          <Badge variant="outline" className="text-[9px] font-medium">
             🔒 Private
           </Badge>
         </div>
@@ -95,9 +95,9 @@ export function EngineSelector({ enginePref, onChange, analysis, routingReason, 
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border bg-card p-1.5">
-      <p className="text-[9px] text-muted-foreground">{label}</p>
-      <p className="text-xs font-mono font-semibold">{value}</p>
+    <div className="rounded-md border border-border bg-background p-1.5">
+      <p className="text-[9px] text-muted-foreground uppercase tracking-wide font-medium">{label}</p>
+      <p className="text-xs font-mono font-semibold mt-0.5">{value}</p>
     </div>
   )
 }
