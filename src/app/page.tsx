@@ -362,7 +362,7 @@ export default function Home() {
 
       {/* Main — 3-column flex with collapsible sidebars */}
       <main className="flex-1 w-full">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 flex gap-5">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 flex gap-5 items-start">
           {/* Left sidebar (collapsible) */}
           <aside
             className={`${
