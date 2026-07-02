@@ -43,7 +43,7 @@ export function ProcessingPanel({
   return (
     <Card>
       <CardContent className="pt-5 space-y-4">
-        <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-border">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-medium">Processing Queue</span>
             {items.length > 0 && (

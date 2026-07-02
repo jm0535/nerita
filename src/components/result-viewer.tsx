@@ -61,7 +61,7 @@ export function ResultViewer({ result, fileName, vectorLayer, imagePreview }: Pr
 
   return (
     <Card className="h-full">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-4 border-b border-border">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <CardTitle className="text-base truncate">{fileName}</CardTitle>
           <div className="flex items-center gap-1.5 flex-wrap">

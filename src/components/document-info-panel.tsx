@@ -37,7 +37,7 @@ export function DocumentInfoPanel({ result }: Props) {
 
   return (
     <Card className="bg-primary/5 border-primary/20">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-4 border-b border-primary/20">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-sm font-semibold">
             <Tag className={`w-4 h-4 ${meta.color}`} />
