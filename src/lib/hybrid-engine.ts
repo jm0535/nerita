@@ -209,24 +209,30 @@ export async function runVisionOcr(
 
   onProgress?.({ status: 'parsing', progress: 0.9 })
 
+  // Vision route returns confidence as a 0-1 fraction (per its prompt); the
+  // rest of the app (Tesseract path, UI, exporters) treats confidence as a
+  // 0-100 percentage. Normalize once here so both engines share one scale.
+  const rawConfidence = data.confidence ?? 0.95
+  const confidence = rawConfidence <= 1 ? rawConfidence * 100 : rawConfidence
+
   // Normalize into OcrResult. Vision LLM doesn't return bboxes, so we
   // synthesize pseudo-bboxes by treating each line as a row.
   const blocks = (data.blocks ?? []).map((b) => {
     const lines = (b.lines ?? b.text.split('\n').filter(Boolean)).map((line) => {
       const words = (line.words ?? line.text.split(/\s+/).filter(Boolean)).map((w, idx) => ({
         text: w.text ?? w,
-        confidence: w.confidence ?? 0.95,
+        confidence: w.confidence ?? confidence,
         bbox: { x0: idx * 50, y0: 0, x1: idx * 50 + 40, y1: 20 },
       }))
       return {
         text: line.text?.trim() ?? '',
-        confidence: line.confidence ?? 0.95,
+        confidence: line.confidence ?? confidence,
         words: Array.isArray(line.words) ? words : words,
       }
     })
     return {
       text: b.text.trim(),
-      confidence: b.confidence ?? 0.95,
+      confidence: b.confidence ?? confidence,
       bbox: { x0: 0, y0: 0, x1: 0, y1: 0 },
       lines,
       paragraph: true,
@@ -239,16 +245,16 @@ export async function runVisionOcr(
     for (const p of paragraphs) {
       const lines = p.split('\n').filter(Boolean).map((lineText) => ({
         text: lineText.trim(),
-        confidence: 0.95,
+        confidence,
         words: lineText.split(/\s+/).filter(Boolean).map((w, idx) => ({
           text: w,
-          confidence: 0.95,
+          confidence,
           bbox: { x0: idx * 50, y0: 0, x1: idx * 50 + 40, y1: 20 },
         })),
       }))
       blocks.push({
         text: p.trim(),
-        confidence: 0.95,
+        confidence,
         bbox: { x0: 0, y0: 0, x1: 0, y1: 0 },
         lines,
         paragraph: true,
@@ -263,7 +269,7 @@ export async function runVisionOcr(
 
   return {
     text: data.text,
-    confidence: data.confidence ?? 0.95,
+    confidence,
     blocks,
     lines,
     words,

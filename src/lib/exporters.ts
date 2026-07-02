@@ -1025,7 +1025,7 @@ function exportGeoJson(result: OcrResult, fileName: string) {
       source: fileName,
       language: result.language,
       ocrConfidence: result.confidence,
-      generatedBy: 'OpenSource OCR (Tesseract.js)',
+      generatedBy: `Nerita (${result.engine === 'vision-ai' ? 'Vision AI' : 'Tesseract.js'})`,
     },
     features,
   }
