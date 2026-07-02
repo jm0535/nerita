@@ -41,7 +41,7 @@ export function EngineSelector({ enginePref, onChange, analysis, routingReason, 
               <SelectItem value="tesseract">
                 <span className="flex items-center gap-2">
                   <Zap className="w-3.5 h-3.5 text-amber-500" />
-                  Tesseract.js (offline)
+                  Tesseract (offline)
                 </span>
               </SelectItem>
               <SelectItem value="vision-ai">

@@ -6,7 +6,7 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-const client = new Anthropic()
+const client = new Anthropic({ timeout: 45_000 })
 
 const ALLOWED_MEDIA_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'] as const
 type AllowedMediaType = (typeof ALLOWED_MEDIA_TYPES)[number]
@@ -39,6 +39,13 @@ const VisionSchema = z.object({
  */
 export async function POST(req: NextRequest) {
   try {
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return NextResponse.json(
+        { error: 'Vision AI is not configured on this server (missing ANTHROPIC_API_KEY). Use the Tesseract engine, or set ANTHROPIC_API_KEY in .env.local and restart the dev server.' },
+        { status: 503 },
+      )
+    }
+
     const body = (await req.json()) as { image: string; language: string }
     if (!body.image) {
       return NextResponse.json({ error: 'Missing image' }, { status: 400 })
