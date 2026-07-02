@@ -78,7 +78,7 @@ export function OcrUploader({ files, onAdd, onRemove, onClear }: Props) {
               PNG, JPG, WebP, GIF, BMP, PDF · multiple files supported
             </p>
           </div>
-          <Button type="button" variant="outline" size="sm" className="mt-1 h-8 text-xs">
+          <Button type="button" variant="outline" size="sm" className="mt-1 h-8 text-xs border-[#2563EB] text-[#2563EB] hover:bg-[#2563EB] hover:text-white transition-colors duration-150">
             <Plus className="w-3.5 h-3.5 mr-1" />
             Select Images
           </Button>

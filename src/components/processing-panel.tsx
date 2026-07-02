@@ -67,7 +67,7 @@ export function ProcessingPanel({
               size="sm"
               onClick={onRunAll}
               disabled={running || items.length === 0}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md h-8"
+              className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-md h-8 transition-colors duration-150 font-semibold"
             >
               {running ? (
                 <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
@@ -91,7 +91,7 @@ export function ProcessingPanel({
             {items.map((item) => (
               <div
                 key={item.file.id}
-                className="flex items-center gap-3 p-2 rounded-md border border-border bg-card hover:bg-accent/50 transition-colors"
+                className="flex items-center gap-3 p-2 rounded-md border border-border bg-card hover:bg-accent/50 transition-colors duration-150"
               >
                 <img
                   src={item.file.preview}

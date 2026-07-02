@@ -55,8 +55,8 @@ export function EngineSelector({ enginePref, onChange, analysis, routingReason, 
         </div>
 
         {routingReason && (
-          <div className="rounded-md bg-primary/5 border border-primary/20 p-2.5">
-            <p className="text-[11px] text-foreground/80 leading-relaxed">
+          <div className="rounded-md bg-blue-50 border border-blue-200 p-2.5">
+            <p className="text-[11px] text-blue-800 leading-relaxed">
               {routingReason}
             </p>
           </div>
@@ -89,7 +89,7 @@ export function EngineSelector({ enginePref, onChange, analysis, routingReason, 
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-border bg-background p-1.5">
+    <div className="rounded-md border border-border bg-background p-1.5 transition-colors duration-150">
       <p className="text-[9px] text-muted-foreground uppercase tracking-wide font-medium">{label}</p>
       <p className="text-xs font-mono font-semibold mt-0.5">{value}</p>
     </div>

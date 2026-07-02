@@ -51,7 +51,7 @@ export function ResultViewer({ result, fileName, vectorLayer, imagePreview }: Pr
     return (
       <Card className="h-full min-h-[400px]">
         <CardContent className="h-full flex flex-col items-center justify-center text-center p-8 text-muted-foreground">
-          <Eye className="w-10 h-10 mb-3 opacity-40" />
+          <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-3"><Eye className="w-7 h-7 opacity-40" /></div>
           <p className="font-medium">No OCR result yet</p>
           <p className="text-sm mt-1">Upload an image and run OCR to see the extracted content here.</p>
         </CardContent>
@@ -105,7 +105,7 @@ export function ResultViewer({ result, fileName, vectorLayer, imagePreview }: Pr
               <Tag className="w-3.5 h-3.5" />
               Fields
               {fieldCount > 0 && (
-                <Badge variant="secondary" className="ml-1 text-[9px] h-4 px-1">
+                <Badge variant="secondary" className="ml-1 text-[9px] h-4 px-1 bg-blue-50 text-blue-700 border-blue-200">
                   {fieldCount}
                 </Badge>
               )}
@@ -114,7 +114,7 @@ export function ResultViewer({ result, fileName, vectorLayer, imagePreview }: Pr
               <Table2 className="w-3.5 h-3.5" />
               Tables
               {tables.length > 0 && (
-                <Badge variant="secondary" className="ml-1 text-[9px] h-4 px-1">
+                <Badge variant="secondary" className="ml-1 text-[9px] h-4 px-1 bg-blue-50 text-blue-700 border-blue-200">
                   {tables.length}
                 </Badge>
               )}
@@ -123,7 +123,7 @@ export function ResultViewer({ result, fileName, vectorLayer, imagePreview }: Pr
               <MapPin className="w-3.5 h-3.5" />
               Geo
               {geo.length > 0 && (
-                <Badge variant="secondary" className="ml-1 text-[9px] h-4 px-1">
+                <Badge variant="secondary" className="ml-1 text-[9px] h-4 px-1 bg-blue-50 text-blue-700 border-blue-200">
                   {geo.length}
                 </Badge>
               )}
@@ -343,7 +343,7 @@ function EmptyState({
   hint: string
 }) {
   return (
-    <div className="rounded-md border border-dashed py-12 px-6 text-center">
+    <div className="rounded-lg border border-dashed border-border py-14 px-6 text-center bg-muted/30">
       <div className="flex justify-center text-muted-foreground mb-2">{icon}</div>
       <p className="font-medium text-sm">{title}</p>
       <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">{hint}</p>
