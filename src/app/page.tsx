@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Github,
-  Sparkles,
   ShieldCheck,
   Zap,
   FileStack,
@@ -285,14 +284,22 @@ export default function Home() {
               </div>
               <div className="flex items-baseline gap-2">
                 <h1 className="text-sm font-semibold leading-none">Nerita</h1>
-                <span className="text-[11px] text-muted-foreground leading-none hidden md:inline">
-                  OCR · Vector · Document AI
+                <span
+                  className="text-[11px] text-muted-foreground leading-none hidden md:inline"
+                  title="Nerita routes each image to the right engine (offline Tesseract.js or cloud Vision AI), detects document type & fields, builds searchable PDFs, vectorizes drawings to DXF/SHP, and remembers everything in your local trail."
+                >
+                  The mangrove snail of OCR
                 </span>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-1">
+            <div className="hidden md:flex items-center gap-1.5 mr-1.5">
+              <FeaturePill icon={<ShieldCheck className="w-3.5 h-3.5" />} label="Private" color="text-emerald-600" />
+              <FeaturePill icon={<Zap className="w-3.5 h-3.5" />} label="Hybrid" color="text-amber-600" />
+              <FeaturePill icon={<FileStack className="w-3.5 h-3.5" />} label="Batch" color="text-violet-600" />
+            </div>
             <Button
               variant="ghost"
               size="sm"
@@ -335,32 +342,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero strip — flat, no gradient */}
-      <section className="border-b border-border bg-card">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
-          <div className="flex items-start justify-between flex-wrap gap-6">
-            <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-1.5 text-[11px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded mb-3">
-                <Sparkles className="w-3 h-3" />
-                Hybrid engine · 100% private · Open-source
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight">
-                The mangrove snail of OCR
-              </h2>
-              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                Nerita routes each image to the right engine (offline Tesseract.js or cloud Vision AI),
-                detects document type & fields, builds searchable PDFs, vectorizes drawings to DXF/SHP,
-                and remembers everything in your local trail.
-              </p>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <FeaturePill icon={<ShieldCheck className="w-3.5 h-3.5" />} label="Private" color="text-emerald-600" />
-              <FeaturePill icon={<Zap className="w-3.5 h-3.5" />} label="Hybrid" color="text-amber-600" />
-              <FeaturePill icon={<FileStack className="w-3.5 h-3.5" />} label="Batch" color="text-violet-600" />
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Main — 3-column flex with collapsible sidebars */}
       <main className="flex-1 w-full">
