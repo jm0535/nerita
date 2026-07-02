@@ -1,11 +1,11 @@
 'use client'
 
 import { Download, Loader2, FileDown, Layers } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { EXPORT_FORMATS, exportAllFormats, exportResult, type ExportFormat } from '@/lib/exporters'
 import type { OcrResult } from '@/lib/ocr'
 import type { VectorLayer } from '@/lib/vectorize'
@@ -22,6 +22,14 @@ const DRAWING_FORMATS: ExportFormat[] = ['svg', 'dxf', 'shp']
 
 export function ExportPanel({ result, fileName, imageFile, vectorLayer, disabled }: Props) {
   const [busy, setBusy] = useState<ExportFormat | 'all' | null>(null)
+  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>(EXPORT_FORMATS[0].id)
+
+  const selected = useMemo(
+    () => EXPORT_FORMATS.find((f) => f.id === selectedFormat) ?? EXPORT_FORMATS[0],
+    [selectedFormat],
+  )
+  const selectedIsDrawing = DRAWING_FORMATS.includes(selectedFormat)
+  const selectedDisabled = selectedIsDrawing && !vectorLayer
 
   const handleExport = async (format: ExportFormat) => {
     if (!result) return
@@ -61,54 +69,55 @@ export function ExportPanel({ result, fileName, imageFile, vectorLayer, disabled
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-          {EXPORT_FORMATS.map((f) => {
-            const isBusy = busy === f.id
-            const isDrawing = DRAWING_FORMATS.includes(f.id)
-            const drawingDisabled = isDrawing && !vectorLayer
-            return (
-              <TooltipProvider key={f.id} delayDuration={150}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={disabled || !result || busy !== null || drawingDisabled}
-                      onClick={() => handleExport(f.id)}
-                      className={`h-auto py-1.5 px-2 flex flex-col items-start gap-0.5 justify-start text-left rounded-md ${
-                        isDrawing && vectorLayer ? 'border-amber-400 bg-amber-50/60 dark:bg-amber-950/20' : ''
-                      }`}
-                    >
-                      <span className="flex items-center gap-1.5 w-full">
-                        {isBusy ? (
-                          <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                        ) : (
-                          <Download className="w-3 h-3 text-muted-foreground" />
-                        )}
-                        <span className="text-[10px] font-semibold uppercase tracking-wide">{f.ext}</span>
-                        {isDrawing && vectorLayer && (
-                          <span className="ml-auto text-[8px] bg-amber-200 dark:bg-amber-900 text-amber-800 dark:text-amber-200 px-1 rounded font-medium">VEC</span>
-                        )}
+        <div className="space-y-1.5">
+          <Select
+            value={selectedFormat}
+            onValueChange={(v) => setSelectedFormat(v as ExportFormat)}
+            disabled={disabled || !result}
+          >
+            <SelectTrigger size="sm" className="w-full text-xs">
+              <SelectValue placeholder="Choose a format" />
+            </SelectTrigger>
+            <SelectContent>
+              {EXPORT_FORMATS.map((f) => {
+                const isDrawing = DRAWING_FORMATS.includes(f.id)
+                return (
+                  <SelectItem key={f.id} value={f.id} disabled={isDrawing && !vectorLayer}>
+                    <span className="text-[10px] font-semibold uppercase tracking-wide w-10 shrink-0">
+                      {f.ext}
+                    </span>
+                    <span className="text-xs">{f.label}</span>
+                    {isDrawing && vectorLayer && (
+                      <span className="ml-auto text-[8px] bg-amber-200 dark:bg-amber-900 text-amber-800 dark:text-amber-200 px-1 rounded font-medium">
+                        VEC
                       </span>
-                      <span className="text-[9px] text-muted-foreground leading-tight line-clamp-2">
-                        {f.label}
-                      </span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[240px]">
-                    <p className="font-semibold text-xs">{f.label}</p>
-                    <p className="text-xs text-muted-foreground">{f.description}</p>
-                    {isDrawing && !vectorLayer && (
-                      <p className="text-[10px] text-amber-700 dark:text-amber-400 mt-1">
-                        Enable Drawing Mode + vectorize first
-                      </p>
                     )}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )
-          })}
+                  </SelectItem>
+                )
+              })}
+            </SelectContent>
+          </Select>
+          <p className="text-[10px] text-muted-foreground leading-snug min-h-[1.5em]">
+            {selectedIsDrawing && !vectorLayer
+              ? 'Enable Drawing Mode + vectorize first'
+              : selected.description}
+          </p>
         </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full rounded-md"
+          disabled={disabled || !result || busy !== null || selectedDisabled}
+          onClick={() => handleExport(selectedFormat)}
+        >
+          {busy === selectedFormat ? (
+            <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+          ) : (
+            <Download className="w-3.5 h-3.5 mr-1.5" />
+          )}
+          Download {selected.ext.toUpperCase()}
+        </Button>
 
         <Button
           variant="default"

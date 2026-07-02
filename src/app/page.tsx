@@ -12,6 +12,8 @@ import {
   Shell,
   PanelLeft,
   PanelRight,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
@@ -364,41 +366,53 @@ export default function Home() {
       <main className="flex-1 w-full">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 flex gap-5 items-start">
           {/* Left sidebar (collapsible) */}
-          <aside
-            className={`${
-              leftCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'w-[340px] opacity-100'
-            } shrink-0 transition-all duration-200 hidden lg:block`}
-          >
-            <div className="space-y-4 sticky top-[4.5rem] max-h-[calc(100vh-5rem)] overflow-y-auto pr-1 pb-4">
-              <Card>
-                <CardContent className="pt-5">
-                  <OcrUploader
-                    files={files}
-                    onAdd={addFiles}
-                    onRemove={removeFile}
-                    onClear={clearAll}
-                  />
-                </CardContent>
-              </Card>
-              <EngineSelector
-                enginePref={enginePref}
-                onChange={setEnginePref}
-                analysis={activeItem ? analyses[activeItem.file.id] : null}
-                routingReason={activeItem ? routingReasons[activeItem.file.id] : undefined}
-                disabled={running}
-              />
-              <DrawingModePanel
-                enabled={drawingMode}
-                onChange={setDrawingMode}
-                onVectorize={handleVectorize}
-                vectorLayer={vectorLayer}
-                vectorizing={vectorizing}
-                vectorStatus={vectorStatus}
-                disabled={running || !activeItem}
-              />
-              <SettingsPanel settings={settings} onChange={setSettings} disabled={running} />
+          <div className="relative shrink-0 hidden lg:block">
+            <aside
+              className={`${
+                leftCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'w-[340px] opacity-100'
+              } transition-all duration-200`}
+            >
+              <div className="space-y-4 sticky top-[4.5rem] max-h-[calc(100vh-5rem)] overflow-y-auto pr-1 pb-4">
+                <Card>
+                  <CardContent className="pt-5">
+                    <OcrUploader
+                      files={files}
+                      onAdd={addFiles}
+                      onRemove={removeFile}
+                      onClear={clearAll}
+                    />
+                  </CardContent>
+                </Card>
+                <EngineSelector
+                  enginePref={enginePref}
+                  onChange={setEnginePref}
+                  analysis={activeItem ? analyses[activeItem.file.id] : null}
+                  routingReason={activeItem ? routingReasons[activeItem.file.id] : undefined}
+                  disabled={running}
+                />
+                <DrawingModePanel
+                  enabled={drawingMode}
+                  onChange={setDrawingMode}
+                  onVectorize={handleVectorize}
+                  vectorLayer={vectorLayer}
+                  vectorizing={vectorizing}
+                  vectorStatus={vectorStatus}
+                  disabled={running || !activeItem}
+                />
+                <SettingsPanel settings={settings} onChange={setSettings} disabled={running} />
+              </div>
+            </aside>
+            <div className="absolute inset-x-0 top-0 h-0 flex justify-end z-10">
+              <button
+                onClick={() => setLeftCollapsed((v) => !v)}
+                className="sticky top-[5.75rem] -mr-3 flex items-center justify-center w-6 h-6 rounded-full border border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/50 shadow-sm transition-colors"
+                aria-label={leftCollapsed ? 'Show left panel' : 'Hide left panel'}
+                title={leftCollapsed ? 'Show left panel' : 'Hide left panel'}
+              >
+                {leftCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+              </button>
             </div>
-          </aside>
+          </div>
 
           {/* Middle column — always visible */}
           <div className="flex-1 min-w-0 space-y-4">
@@ -421,11 +435,22 @@ export default function Home() {
           </div>
 
           {/* Right sidebar (collapsible) */}
-          <aside
-            className={`${
-              rightCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'w-[300px] opacity-100'
-            } shrink-0 transition-all duration-200 hidden lg:block`}
-          >
+          <div className="relative shrink-0 hidden lg:block">
+            <div className="absolute inset-x-0 top-0 h-0 flex justify-start z-10">
+              <button
+                onClick={() => setRightCollapsed((v) => !v)}
+                className="sticky top-[5.75rem] -ml-3 flex items-center justify-center w-6 h-6 rounded-full border border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/50 shadow-sm transition-colors"
+                aria-label={rightCollapsed ? 'Show right panel' : 'Hide right panel'}
+                title={rightCollapsed ? 'Show right panel' : 'Hide right panel'}
+              >
+                {rightCollapsed ? <ChevronLeft className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+            <aside
+              className={`${
+                rightCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'w-[300px] opacity-100'
+              } transition-all duration-200`}
+            >
             <div className="space-y-4 sticky top-[4.5rem] max-h-[calc(100vh-5rem)] overflow-y-auto pr-1 pb-4">
               <ExportPanel
                 result={activeItem?.result ?? null}
@@ -478,7 +503,8 @@ export default function Home() {
                 </CardContent>
               </Card>
             </div>
-          </aside>
+            </aside>
+          </div>
         </div>
 
         {/* Mobile fallback: stacked layout (single column) */}
