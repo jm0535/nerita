@@ -1,7 +1,7 @@
 'use client'
 
 import { PencilRuler, Sparkles, Loader2 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { SidebarSection } from '@/components/ui/sidebar-section'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -28,22 +28,20 @@ export function DrawingModePanel({
   disabled,
 }: Props) {
   return (
-    <Card className={enabled ? 'border-amber-400 dark:border-amber-600' : ''}>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-            <PencilRuler className={`w-4 h-4 ${enabled ? 'text-amber-600' : 'text-muted-foreground'}`} />
-            Drawing Mode
-          </CardTitle>
-          <Switch
-            checked={enabled}
-            onCheckedChange={onChange}
-            disabled={disabled}
-            aria-label="Toggle drawing mode"
-          />
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
+    <SidebarSection
+      title="Drawing Mode"
+      icon={<PencilRuler className="w-3.5 h-3.5" />}
+      accent={enabled ? '#d97706' : undefined}
+      action={
+        <Switch
+          checked={enabled}
+          onCheckedChange={onChange}
+          disabled={disabled}
+          aria-label="Toggle drawing mode"
+        />
+      }
+    >
+      <div className="space-y-3">
         <p className="text-[11px] text-muted-foreground leading-relaxed">
           {enabled
             ? 'Nerita will vectorize line drawings, plans, and schematics into editable geometry — lines, circles, polygons. Export to SVG, DXF (AutoCAD), or SHP (GIS).'
@@ -87,8 +85,8 @@ export function DrawingModePanel({
             )}
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </SidebarSection>
   )
 }
 

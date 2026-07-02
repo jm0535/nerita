@@ -13,10 +13,13 @@ import {
   PanelRight,
   ChevronLeft,
   ChevronRight,
+  UploadCloud,
+  BarChart3,
+  Lightbulb,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { SidebarSection } from '@/components/ui/sidebar-section'
 import { toast } from 'sonner'
 import { OcrUploader, type UploadedFile } from '@/components/ocr-uploader'
 import { SettingsPanel, type OcrSettings } from '@/components/settings-panel'
@@ -311,7 +314,7 @@ export default function Home() {
               <Sun className="w-3.5 h-3.5 hidden dark:block" />
               <Moon className="w-3.5 h-3.5 block dark:hidden" />
               <span className="hidden sm:inline dark:hidden">Dark</span>
-              <span className="hidden sm:inline dark:inline">Light</span>
+              <span className="hidden dark:sm:inline">Light</span>
             </Button>
             <Button
               variant="ghost"
@@ -353,34 +356,34 @@ export default function Home() {
                 leftCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'w-[340px] opacity-100'
               } transition-all duration-200`}
             >
-              <div className="space-y-4 sticky top-[4.5rem] max-h-[calc(100vh-5rem)] overflow-y-auto pr-1 pb-4">
-                <Card>
-                  <CardContent className="pt-5">
+              <div className="sticky top-[4.5rem] max-h-[calc(100vh-5rem)] overflow-y-auto pr-1 pb-4">
+                <div className="rounded-lg border border-border bg-card divide-y divide-border">
+                  <SidebarSection title="Upload" icon={<UploadCloud className="w-3.5 h-3.5" />}>
                     <OcrUploader
                       files={files}
                       onAdd={addFiles}
                       onRemove={removeFile}
                       onClear={clearAll}
                     />
-                  </CardContent>
-                </Card>
-                <EngineSelector
-                  enginePref={enginePref}
-                  onChange={setEnginePref}
-                  analysis={activeItem ? analyses[activeItem.file.id] : null}
-                  routingReason={activeItem ? routingReasons[activeItem.file.id] : undefined}
-                  disabled={running}
-                />
-                <DrawingModePanel
-                  enabled={drawingMode}
-                  onChange={setDrawingMode}
-                  onVectorize={handleVectorize}
-                  vectorLayer={vectorLayer}
-                  vectorizing={vectorizing}
-                  vectorStatus={vectorStatus}
-                  disabled={running || !activeItem}
-                />
-                <SettingsPanel settings={settings} onChange={setSettings} disabled={running} />
+                  </SidebarSection>
+                  <EngineSelector
+                    enginePref={enginePref}
+                    onChange={setEnginePref}
+                    analysis={activeItem ? analyses[activeItem.file.id] : null}
+                    routingReason={activeItem ? routingReasons[activeItem.file.id] : undefined}
+                    disabled={running}
+                  />
+                  <DrawingModePanel
+                    enabled={drawingMode}
+                    onChange={setDrawingMode}
+                    onVectorize={handleVectorize}
+                    vectorLayer={vectorLayer}
+                    vectorizing={vectorizing}
+                    vectorStatus={vectorStatus}
+                    disabled={running || !activeItem}
+                  />
+                  <SettingsPanel settings={settings} onChange={setSettings} disabled={running} />
+                </div>
               </div>
             </aside>
             <div className="absolute inset-x-0 top-0 h-0 flex justify-end z-10">
@@ -432,19 +435,17 @@ export default function Home() {
                 rightCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'w-[300px] opacity-100'
               } transition-all duration-200`}
             >
-            <div className="space-y-4 sticky top-[4.5rem] max-h-[calc(100vh-5rem)] overflow-y-auto pr-1 pb-4">
-              <ExportPanel
-                result={activeItem?.result ?? null}
-                fileName={activeItem?.file.file.name ?? 'nerita-result'}
-                imageFile={activeItem?.file.file}
-                vectorLayer={drawingMode ? vectorLayer : null}
-                disabled={running}
-              />
-              <HistoryPanel onSelect={handleHistorySelect} refreshKey={historyRefreshKey} />
-
-              <Card>
-                <CardContent className="pt-5 space-y-3">
-                  <h3 className="text-sm font-semibold">Session stats</h3>
+            <div className="sticky top-[4.5rem] max-h-[calc(100vh-5rem)] overflow-y-auto pr-1 pb-4 space-y-4">
+              <div className="rounded-lg border border-border bg-card divide-y divide-border">
+                <ExportPanel
+                  result={activeItem?.result ?? null}
+                  fileName={activeItem?.file.file.name ?? 'nerita-result'}
+                  imageFile={activeItem?.file.file}
+                  vectorLayer={drawingMode ? vectorLayer : null}
+                  disabled={running}
+                />
+                <HistoryPanel onSelect={handleHistorySelect} refreshKey={historyRefreshKey} />
+                <SidebarSection title="Session stats" icon={<BarChart3 className="w-3.5 h-3.5" />}>
                   <div className="grid grid-cols-2 gap-2">
                     <Stat label="Files" value={items.length} />
                     <Stat label="Processed" value={doneCount} accent />
@@ -468,63 +469,64 @@ export default function Home() {
                       }
                     />
                   </div>
-                </CardContent>
-              </Card>
+                </SidebarSection>
+              </div>
 
-              <Card className="bg-primary/5 border-primary/20">
-                <CardContent className="pt-5">
-                  <h3 className="text-sm font-semibold mb-2">How Nerita grazes</h3>
-                  <ol className="text-xs text-muted-foreground space-y-1.5 list-decimal list-inside">
-                    <li>Upload one or more scanned images</li>
-                    <li>Pick an engine (or let Auto decide)</li>
-                    <li>Click <strong className="text-foreground">Run OCR</strong> — Nerita clings to each image</li>
-                    <li>Preview text, fields, tables & vectors</li>
-                    <li>Export to any of 14 formats (or all at once)</li>
-                  </ol>
-                </CardContent>
-              </Card>
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+                <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-primary mb-2">
+                  <Lightbulb className="w-3.5 h-3.5" />
+                  How Nerita grazes
+                </h3>
+                <ol className="text-xs text-muted-foreground space-y-1.5 list-decimal list-inside">
+                  <li>Upload one or more scanned images</li>
+                  <li>Pick an engine (or let Auto decide)</li>
+                  <li>Click <strong className="text-foreground">Run OCR</strong> — Nerita clings to each image</li>
+                  <li>Preview text, fields, tables & vectors</li>
+                  <li>Export to any of 14 formats (or all at once)</li>
+                </ol>
+              </div>
             </div>
             </aside>
           </div>
         </div>
 
         {/* Mobile fallback: stacked layout (single column) */}
-        <div className="lg:hidden max-w-[1600px] mx-auto px-4 sm:px-6 pb-6 space-y-4">
-          <Card>
-            <CardContent className="pt-5">
+        <div className="lg:hidden max-w-[1600px] mx-auto px-4 sm:px-6 pb-6">
+          <div className="rounded-lg border border-border bg-card divide-y divide-border">
+            <SidebarSection title="Upload" icon={<UploadCloud className="w-3.5 h-3.5" />}>
               <OcrUploader
                 files={files}
                 onAdd={addFiles}
                 onRemove={removeFile}
                 onClear={clearAll}
               />
-            </CardContent>
-          </Card>
-          <EngineSelector
-            enginePref={enginePref}
-            onChange={setEnginePref}
-            analysis={activeItem ? analyses[activeItem.file.id] : null}
-            routingReason={activeItem ? routingReasons[activeItem.file.id] : undefined}
-            disabled={running}
-          />
-          <DrawingModePanel
-            enabled={drawingMode}
-            onChange={setDrawingMode}
-            onVectorize={handleVectorize}
-            vectorLayer={vectorLayer}
-            vectorizing={vectorizing}
-            vectorStatus={vectorStatus}
-            disabled={running || !activeItem}
-          />
-          <SettingsPanel settings={settings} onChange={setSettings} disabled={running} />
-          <ExportPanel
-            result={activeItem?.result ?? null}
-            fileName={activeItem?.file.file.name ?? 'nerita-result'}
-            imageFile={activeItem?.file.file}
-            vectorLayer={drawingMode ? vectorLayer : null}
-            disabled={running}
-          />
-          <HistoryPanel onSelect={handleHistorySelect} refreshKey={historyRefreshKey} />
+            </SidebarSection>
+            <EngineSelector
+              enginePref={enginePref}
+              onChange={setEnginePref}
+              analysis={activeItem ? analyses[activeItem.file.id] : null}
+              routingReason={activeItem ? routingReasons[activeItem.file.id] : undefined}
+              disabled={running}
+            />
+            <DrawingModePanel
+              enabled={drawingMode}
+              onChange={setDrawingMode}
+              onVectorize={handleVectorize}
+              vectorLayer={vectorLayer}
+              vectorizing={vectorizing}
+              vectorStatus={vectorStatus}
+              disabled={running || !activeItem}
+            />
+            <SettingsPanel settings={settings} onChange={setSettings} disabled={running} />
+            <ExportPanel
+              result={activeItem?.result ?? null}
+              fileName={activeItem?.file.file.name ?? 'nerita-result'}
+              imageFile={activeItem?.file.file}
+              vectorLayer={drawingMode ? vectorLayer : null}
+              disabled={running}
+            />
+            <HistoryPanel onSelect={handleHistorySelect} refreshKey={historyRefreshKey} />
+          </div>
         </div>
       </main>
 

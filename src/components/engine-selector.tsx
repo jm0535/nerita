@@ -1,7 +1,7 @@
 'use client'
 
 import { Brain, Zap, Shuffle, Cpu } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { SidebarSection } from '@/components/ui/sidebar-section'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -23,14 +23,8 @@ type Props = {
 
 export function EngineSelector({ enginePref, onChange, analysis, routingReason, disabled }: Props) {
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-          <Cpu className="w-4 h-4 text-primary" />
-          OCR Engine
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
+    <SidebarSection title="OCR Engine" icon={<Cpu className="w-3.5 h-3.5" />}>
+      <div className="space-y-3">
         <div className="space-y-1.5">
           <Label className="text-xs font-medium">Recognition engine</Label>
           <Select value={enginePref} onValueChange={(v) => onChange(v as EngineId)} disabled={disabled}>
@@ -88,8 +82,8 @@ export function EngineSelector({ enginePref, onChange, analysis, routingReason, 
             🔒 Private
           </Badge>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </SidebarSection>
   )
 }
 

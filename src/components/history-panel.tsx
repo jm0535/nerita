@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { History, Search, Trash2, RotateCcw, X } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { SidebarSection } from '@/components/ui/sidebar-section'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -54,16 +54,14 @@ export function HistoryPanel({ onSelect, refreshKey }: Props) {
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-            <History className="w-4 h-4 text-primary" />
-            The Trail
-            {items.length > 0 && (
-              <Badge variant="secondary" className="text-[10px] font-medium">{items.length}</Badge>
-            )}
-          </CardTitle>
+    <SidebarSection
+      title="The Trail"
+      icon={<History className="w-3.5 h-3.5" />}
+      action={
+        <div className="flex items-center gap-1.5">
+          {items.length > 0 && (
+            <Badge variant="secondary" className="text-[10px] font-medium">{items.length}</Badge>
+          )}
           {items.length > 0 && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -86,8 +84,9 @@ export function HistoryPanel({ onSelect, refreshKey }: Props) {
             </AlertDialog>
           )}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
+      }
+    >
+      <div className="space-y-3">
         {items.length > 0 && (
           <div className="relative">
             <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -122,7 +121,7 @@ export function HistoryPanel({ onSelect, refreshKey }: Props) {
               {filtered.map((item) => (
                 <div
                   key={item.id}
-                  className="group flex items-center gap-2 p-2 rounded-md border border-border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+                  className="group flex items-center gap-2 p-2 rounded-md hover:bg-accent/60 transition-colors cursor-pointer"
                   onClick={() => onSelect(item)}
                 >
                   {item.thumbnail ? (
@@ -164,7 +163,7 @@ export function HistoryPanel({ onSelect, refreshKey }: Props) {
             </div>
           </ScrollArea>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </SidebarSection>
   )
 }

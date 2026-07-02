@@ -3,7 +3,7 @@
 import { Download, Loader2, FileDown, Layers } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { SidebarSection } from '@/components/ui/sidebar-section'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { EXPORT_FORMATS, exportAllFormats, exportResult, type ExportFormat } from '@/lib/exporters'
@@ -54,21 +54,18 @@ export function ExportPanel({ result, fileName, imageFile, vectorLayer, disabled
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-            <FileDown className="w-4 h-4 text-primary" />
-            Export
-          </CardTitle>
-          {result && (
-            <Badge variant="secondary" className="text-[10px] font-medium">
-              {EXPORT_FORMATS.length} formats
-            </Badge>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
+    <SidebarSection
+      title="Export"
+      icon={<FileDown className="w-3.5 h-3.5" />}
+      action={
+        result && (
+          <Badge variant="secondary" className="text-[10px] font-medium">
+            {EXPORT_FORMATS.length} formats
+          </Badge>
+        )
+      }
+    >
+      <div className="space-y-3">
         <div className="space-y-1.5">
           <Select
             value={selectedFormat}
@@ -133,7 +130,7 @@ export function ExportPanel({ result, fileName, imageFile, vectorLayer, disabled
           )}
           Download all {EXPORT_FORMATS.length} formats
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </SidebarSection>
   )
 }
