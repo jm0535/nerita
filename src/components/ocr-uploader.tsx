@@ -26,7 +26,12 @@ export function OcrUploader({ files, onAdd, onRemove, onClear }: Props) {
   const handleFiles = useCallback(
     (fileList: FileList | null) => {
       if (!fileList) return
-      const arr = Array.from(fileList).filter((f) => f.type.startsWith('image/'))
+      const arr = Array.from(fileList).filter(
+        (f) =>
+          f.type.startsWith('image/') ||
+          f.type === 'application/pdf' ||
+          f.name.toLowerCase().endsWith('.pdf'),
+      )
       if (arr.length) onAdd(arr)
     },
     [onAdd],
@@ -56,7 +61,7 @@ export function OcrUploader({ files, onAdd, onRemove, onClear }: Props) {
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,application/pdf"
           multiple
           className="sr-only"
           onChange={(e) => handleFiles(e.target.files)}
@@ -67,10 +72,10 @@ export function OcrUploader({ files, onAdd, onRemove, onClear }: Props) {
           </div>
           <div>
             <p className="text-sm font-medium text-foreground">
-              Drop scanned images here, or click to browse
+              Drop scanned images or PDFs here, or click to browse
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              PNG, JPG, WebP, GIF, BMP · multiple files supported
+              PNG, JPG, WebP, GIF, BMP, PDF · multiple files supported
             </p>
           </div>
           <Button type="button" variant="outline" size="sm" className="mt-1 h-8 text-xs">

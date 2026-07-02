@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  Github,
   ShieldCheck,
   Zap,
   FileStack,
@@ -39,6 +38,7 @@ import {
   type ImageAnalysis,
 } from '@/lib/hybrid-engine'
 import { saveToHistory, type HistoryItem } from '@/lib/history'
+import { expandPdfsToImages } from '@/lib/pdf-to-images'
 import { vectorizeImage, type VectorLayer } from '@/lib/vectorize'
 
 export default function Home() {
@@ -65,8 +65,20 @@ export default function Home() {
   const [leftCollapsed, setLeftCollapsed] = useState(false)
   const [rightCollapsed, setRightCollapsed] = useState(false)
 
-  const addFiles = useCallback((incoming: File[]) => {
-    const newOnes: UploadedFile[] = incoming.map((file) => ({
+  const addFiles = useCallback(async (incoming: File[]) => {
+    const pdfCount = incoming.filter(
+      (f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'),
+    ).length
+    let expanded = incoming
+    if (pdfCount > 0) {
+      toast.info(`Converting ${pdfCount} PDF${pdfCount !== 1 ? 's' : ''} to page images…`)
+      expanded = await expandPdfsToImages(incoming, (file, err) => {
+        const message = err instanceof Error ? err.message : String(err)
+        toast.error(`Could not read PDF: ${file.name}`, { description: message })
+      })
+      if (expanded.length === 0) return
+    }
+    const newOnes: UploadedFile[] = expanded.map((file) => ({
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       file,
       preview: URL.createObjectURL(file),
@@ -201,11 +213,15 @@ export default function Home() {
     [items, activeId],
   )
 
-  // Reset vector layer when active file changes
-  useEffect(() => {
+  // Reset vector layer when active file changes. Adjusted during render
+  // (React's recommended pattern for resetting state on a key/prop change)
+  // instead of an effect, so it doesn't trigger an extra cascading render.
+  const [prevActiveIdForVector, setPrevActiveIdForVector] = useState(activeId)
+  if (activeId !== prevActiveIdForVector) {
+    setPrevActiveIdForVector(activeId)
     setVectorLayer(null)
     setVectorStatus('')
-  }, [activeId])
+  }
 
   const handleVectorize = useCallback(async () => {
     if (!activeItem) {
@@ -315,21 +331,6 @@ export default function Home() {
               <Moon className="w-3.5 h-3.5 block dark:hidden" />
               <span className="hidden sm:inline dark:hidden">Dark</span>
               <span className="hidden dark:sm:inline">Light</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 px-2.5 text-xs gap-1.5 font-medium"
-              asChild
-            >
-              <a
-                href="https://github.com/naptha/tesseract.js"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Github className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Tesseract.js</span>
-              </a>
             </Button>
             <Button
               variant="ghost"
